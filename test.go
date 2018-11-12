@@ -26,5 +26,7 @@ func main() {
 	buffer := make([]byte, 1024)
 	// Read the number of bytes (1024) into a variable length slice of bytes, 'Buffer'
 	count, _ := conn.Read(buffer)
+	// 'Count' refers to the number of bytes received in the slice
+	// Below we decode that amount (buffer_slice[:number_of_bytes]) as a string
 	fmt.Println(string(buffer[:count]))
 }
