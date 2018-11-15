@@ -7,7 +7,11 @@ import (
 )
 
 type testPacket struct {
-	Field int32
+	version  int16
+	count    int16
+	uptime   int32
+	sequence int32
+	id       int32
 }
 
 func main() {
@@ -16,8 +20,11 @@ func main() {
 		fmt.Printf("Some error %v", err)
 		return
 	}
-	tp := testPacket{64}
-	err = binary.Write(conn, binary.LittleEndian, tp)
+	tp := testPacket{
+		version: 64,
+		count:   32,
+	}
+	err = binary.Write(conn, binary.BigEndian, tp)
 	if err != nil {
 		fmt.Println("err:", err)
 	}

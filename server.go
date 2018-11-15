@@ -6,8 +6,12 @@ import (
 	"net"
 )
 
-type netflowPacket struct {
-	Field int32
+type netflowPacketHeader struct {
+	Version  int16
+	Count    int16
+	Uptime   int32
+	Sequence int32
+	Id       int32
 }
 
 func main() {
@@ -23,13 +27,13 @@ func main() {
 		return
 	}
 
-	p := netflowPacket{}
-	err = binary.Read(conn, binary.LittleEndian, &p)
+	p := netflowPacketHeader{}
+	err = binary.Read(conn, binary.BigEndian, &p)
 	if err != nil {
 		fmt.Printf("Some error %v\n", err)
 		return
 	}
-	fmt.Printf("Int: %v\n", p.Field)
+	fmt.Printf("Int: %v %v\n", p.Version, p.Count)
 	// Buffer creates an array of bytes
 	//buffer := make([]byte, 1024)
 
