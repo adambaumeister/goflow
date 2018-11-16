@@ -10,6 +10,7 @@ type testPacket struct {
 	version   int16
 	count     int16
 	uptime    int32
+	usecs     int32
 	sequence  int32
 	id        int32
 	flowSetId int16
@@ -23,9 +24,10 @@ func main() {
 		return
 	}
 	tp := testPacket{
-		version:   64,
+		version:   22,
 		count:     32,
 		uptime:    1280,
+		usecs:     122,
 		sequence:  2000,
 		id:        2300,
 		flowSetId: 0,

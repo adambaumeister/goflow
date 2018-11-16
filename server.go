@@ -7,7 +7,7 @@ import (
 )
 
 type netflowPacketHeader struct {
-	Version   int16
+	Version   uint16
 	Count     int16
 	Uptime    int32
 	Sequence  int32
@@ -17,7 +17,7 @@ type netflowPacketHeader struct {
 }
 
 type netflowPacketFlowsetId struct {
-	FlowSetID int16
+	FlowSetID uint16
 }
 
 type netflowPacketTemplate struct {
@@ -36,28 +36,17 @@ func main() {
 		fmt.Printf("Some error %v\n", err)
 		return
 	}
-
 	p := netflowPacketHeader{}
-	err = binary.Read(conn, binary.BigEndian, &p)
-	if err != nil {
-		fmt.Printf("Some error %v\n", err)
-		return
-	}
-
-	fmt.Printf("(%v) Int: %v %v %v\n", conn.RemoteAddr(), p.Version, p.Count, p.Length)
-	if p.FlowSetId.FlowSetID == 0 {
-		t := netflowPacketTemplate{}
-		err = binary.Read(conn, binary.BigEndian, &t)
-		if err != nil {
-			fmt.Printf("Some error %v\n", err)
-			return
-		}
-	}
+	//f := netflowPacketFlowsetId{}
 	// Buffer creates an array of bytes
-	//buffer := make([]byte, 1024)
-
-	// Read the number of bytes (1024) into a variable length slice of bytes, 'Buffer'
-	//count, _ := conn.Read(buffer)
+	// We want to read the entire datagram in as UDP is type SOCK_DGRAM and "Read" can't be called more than once
+	packet := make([]byte, 1500)
+	// Read the number of bytes (1500) into a variable length slice of bytes, 'Buffer'
+	count, _ := conn.Read(packet)
+	id := netflowPacketFlowsetId{}
+	p.Version = binary.BigEndian.Uint16(packet[:2])
+	id.FlowSetID = binary.BigEndian.Uint16(packet[20:22])
+	fmt.Printf("version: %v FlowSetID %v(read: %v)", p.Version, id.FlowSetID, count)
 
 	// 'Count' refers to the number of bytes received in the slice
 	// Below we decode that amount (buffer_slice[:number_of_bytes]) as a string
