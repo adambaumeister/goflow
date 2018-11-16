@@ -7,11 +7,21 @@ import (
 )
 
 type netflowPacketHeader struct {
-	Version  int16
-	Count    int16
-	Uptime   int32
-	Sequence int32
-	Id       int32
+	Version   int16
+	Count     int16
+	Uptime    int32
+	Sequence  int32
+	Id        int32
+	FlowSetId netflowPacketFlowsetId
+	Length    netflowPacketTemplate
+}
+
+type netflowPacketFlowsetId struct {
+	FlowSetID int16
+}
+
+type netflowPacketTemplate struct {
+	Length int16
 }
 
 func main() {
@@ -33,7 +43,16 @@ func main() {
 		fmt.Printf("Some error %v\n", err)
 		return
 	}
-	fmt.Printf("Int: %v %v\n", p.Version, p.Count)
+
+	fmt.Printf("(%v) Int: %v %v %v\n", conn.RemoteAddr(), p.Version, p.Count, p.Length)
+	if p.FlowSetId.FlowSetID == 0 {
+		t := netflowPacketTemplate{}
+		err = binary.Read(conn, binary.BigEndian, &t)
+		if err != nil {
+			fmt.Printf("Some error %v\n", err)
+			return
+		}
+	}
 	// Buffer creates an array of bytes
 	//buffer := make([]byte, 1024)
 
