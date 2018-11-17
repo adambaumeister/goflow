@@ -7,14 +7,15 @@ import (
 )
 
 type testPacket struct {
-	version   int16
-	count     int16
-	uptime    int32
-	usecs     int32
-	sequence  int32
-	id        int32
-	flowSetId int16
-	Length    int16
+	version    int16
+	count      int16
+	uptime     int32
+	usecs      int32
+	sequence   int32
+	id         int32
+	flowSetId  int16
+	Length     int16
+	TemplateID int16
 }
 
 func main() {
@@ -24,14 +25,15 @@ func main() {
 		return
 	}
 	tp := testPacket{
-		version:   22,
-		count:     32,
-		uptime:    1280,
-		usecs:     122,
-		sequence:  2000,
-		id:        2300,
-		flowSetId: 0,
-		Length:    77,
+		version:    22,
+		count:      32,
+		uptime:     1280,
+		usecs:      122,
+		sequence:   2000,
+		id:         2300,
+		flowSetId:  0,
+		Length:     77,
+		TemplateID: 11,
 	}
 	err = binary.Write(conn, binary.BigEndian, tp)
 	if err != nil {

@@ -21,10 +21,15 @@ type netflowPacketFlowsetId struct {
 }
 
 type netflowPacketTemplate struct {
-	Length int16
+	FlowSetID uint16
+	Length    uint16
+	ID        uint16
 }
 
 func main() {
+
+	// Provides parsing for Netflow V9 Records
+	// https://www.ietf.org/rfc/rfc3954.txt
 
 	addr := net.UDPAddr{
 		Port: 9999,
@@ -37,19 +42,22 @@ func main() {
 		return
 	}
 	p := netflowPacketHeader{}
-	//f := netflowPacketFlowsetId{}
 	// Buffer creates an array of bytes
 	// We want to read the entire datagram in as UDP is type SOCK_DGRAM and "Read" can't be called more than once
 	packet := make([]byte, 1500)
-	// Read the number of bytes (1500) into a variable length slice of bytes, 'Buffer'
-	count, _ := conn.Read(packet)
+	// Read the max number of bytes in a datagram(1500) into a variable length slice of bytes, 'Buffer'
+	conn.Read(packet)
 	id := netflowPacketFlowsetId{}
 	p.Version = binary.BigEndian.Uint16(packet[:2])
 	id.FlowSetID = binary.BigEndian.Uint16(packet[20:22])
-	fmt.Printf("version: %v FlowSetID %v(read: %v)", p.Version, id.FlowSetID, count)
 
-	// 'Count' refers to the number of bytes received in the slice
-	// Below we decode that amount (buffer_slice[:number_of_bytes]) as a string
-	// fmt.Println(string(buffer[:count]))
-
+	switch id.FlowSetID {
+	// Template flowset
+	case 0:
+		template := netflowPacketTemplate{}
+		template.Length = binary.BigEndian.Uint16(packet[22:24])
+		templateSlice := packet[22:template.Length]
+		template.ID = binary.BigEndian.Uint16(templateSlice[2:4])
+		fmt.Printf("version: %v Template %v", p.Version, template.ID)
+	}
 }
