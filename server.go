@@ -21,9 +21,10 @@ type netflowPacketFlowsetId struct {
 }
 
 type netflowPacketTemplate struct {
-	FlowSetID uint16
-	Length    uint16
-	ID        uint16
+	FlowSetID  uint16
+	Length     uint16
+	ID         uint16
+	FieldCount uint16
 }
 
 func main() {
@@ -58,6 +59,24 @@ func main() {
 		template.Length = binary.BigEndian.Uint16(packet[22:24])
 		templateSlice := packet[22:template.Length]
 		template.ID = binary.BigEndian.Uint16(templateSlice[2:4])
-		fmt.Printf("version: %v Template %v", p.Version, template.ID)
+
+		// Get the number of Fields
+		template.FieldCount = binary.BigEndian.Uint16(templateSlice[4:6])
+		fmt.Printf("version: %v Fields %v\n", p.Version, template.FieldCount)
+
+		// Start at the first fields and work through
+		fieldStart := 6
+		var read = uint16(0)
+		for read < template.FieldCount {
+			fieldTypeEnd := fieldStart + 2
+			fieldType := binary.BigEndian.Uint16(templateSlice[fieldStart:fieldTypeEnd])
+			fieldLengthEnd := fieldTypeEnd + 2
+			fieldLength := binary.BigEndian.Uint16(templateSlice[fieldTypeEnd:fieldLengthEnd])
+
+			read++
+			fieldStart = fieldLengthEnd
+			fmt.Printf("Field Type: %v, Field Length %v\n", fieldType, fieldLength)
+		}
+
 	}
 }

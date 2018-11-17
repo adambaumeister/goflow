@@ -16,6 +16,10 @@ type testPacket struct {
 	flowSetId  int16
 	Length     int16
 	TemplateID int16
+	FieldCount int16
+
+	FieldType1   int16
+	FieldLength1 int16
 }
 
 func main() {
@@ -25,7 +29,7 @@ func main() {
 		return
 	}
 	tp := testPacket{
-		version:    22,
+		version:    9,
 		count:      32,
 		uptime:     1280,
 		usecs:      122,
@@ -34,6 +38,10 @@ func main() {
 		flowSetId:  0,
 		Length:     77,
 		TemplateID: 11,
+		FieldCount: 5,
+
+		FieldType1:   1,
+		FieldLength1: 32,
 	}
 	err = binary.Write(conn, binary.BigEndian, tp)
 	if err != nil {
