@@ -38,7 +38,7 @@ func main() {
 		flowSetId:  0,
 		Length:     77,
 		TemplateID: 11,
-		FieldCount: 5,
+		FieldCount: 1,
 
 		FieldType1:   1,
 		FieldLength1: 32,
