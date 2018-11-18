@@ -23,8 +23,9 @@ type netflowPacketHeader struct {
 	Id       int32
 }
 
-type netflowPacketFlowsetId struct {
+type netflowPacketFlowset struct {
 	FlowSetID uint16
+	Length    uint16
 }
 
 type netflowPacketTemplate struct {
@@ -41,41 +42,27 @@ type templateField struct {
 }
 
 /*
-Parse a DataFlowset
-
-Requires netflowPacketTemplate to resolve the fields/byte offset
-
-func parseData (p []byte, t netflowPacketTemplate) {
-
-}
-*/
-
-/*
 ParseTemplate
 
 Slices a flow template out of an overall packet
 Requires
 	p []byte : Full packet bytes
-	s uint16 : Start of slice
+	s uint16 : Start byte index of slice
 Returns
 	netFlowPacketTemplate: Struct of template
- 	uint16: End of template slice
+ 	uint16: End byte index of slice
 */
-func parseTemplate(p []byte) (netflowPacketTemplate, uint16) {
+func parseTemplate(templateSlice []byte) netflowPacketTemplate {
 
 	template := netflowPacketTemplate{
 		Fields: make(map[uint16]templateField),
 	}
-	template.Length = binary.BigEndian.Uint16(p[22:24])
-	// Calculate ending byte of the template flowset
-	tl := template.Length + 20
-	templateSlice := p[20:tl]
 	template.ID = binary.BigEndian.Uint16(templateSlice[4:6])
 
 	// Get the number of Fields
 	template.FieldCount = binary.BigEndian.Uint16(templateSlice[6:8])
 	// Start at the first fields and work through
-	fmt.Printf("L; %v, I: %v, FC: %v", template.Length, template.ID, template.FieldCount)
+	fmt.Printf("L; %v, I: %v, FC: %v\n\n", template.Length, template.ID, template.FieldCount)
 	fieldStart := 8
 	var read = uint16(0)
 	for read < template.FieldCount {
@@ -99,7 +86,22 @@ func parseTemplate(p []byte) (netflowPacketTemplate, uint16) {
 	for t, template := range template.Fields {
 		fmt.Printf("Type read: %v, Length: %v\n", t, template.Length)
 	}
-	return template, tl
+	return template
+}
+
+func Route(nfp netflowPacket, p []byte, start uint16) {
+	id := netflowPacketFlowset{}
+	id.FlowSetID = binary.BigEndian.Uint16(p[start : start+2])
+	id.Length = binary.BigEndian.Uint16(p[start+2 : start+4])
+
+	// Slice the next flowset out
+	s := p[start : start+id.Length]
+	switch id.FlowSetID {
+	// Template flowset
+	case uint16(0):
+		t := parseTemplate(s)
+		nfp.Templates[t.ID] = t
+	}
 }
 
 func main() {
@@ -128,16 +130,8 @@ func main() {
 	packet := make([]byte, 1500)
 	// Read the max number of bytes in a datagram(1500) into a variable length slice of bytes, 'Buffer'
 	conn.Read(packet)
-	id := netflowPacketFlowsetId{}
 	p.Version = binary.BigEndian.Uint16(packet[:2])
-	id.FlowSetID = binary.BigEndian.Uint16(packet[20:22])
-
 	nfpacket.Header = p
-	switch id.FlowSetID {
-	// Template flowset
-	case uint16(0):
-		t, l := parseTemplate(packet)
-		nfpacket.Templates[t.ID] = t
-		fmt.Printf("Read total: %v", l)
-	}
+
+	Route(nfpacket, packet, uint16(20))
 }

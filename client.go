@@ -31,17 +31,19 @@ func main() {
 		return
 	}
 	tp := testPacket{
-		version:    9,
-		count:      32,
-		uptime:     1280,
-		usecs:      122,
-		sequence:   2000,
-		id:         2300,
+		// Header
+		version:  9,
+		count:    32,
+		uptime:   1280,
+		usecs:    122,
+		sequence: 2000,
+		id:       2300,
+		// Template Headers
 		flowSetId:  0,
 		Length:     16,
 		TemplateID: 11,
 		FieldCount: 2,
-
+		// Template Fields
 		FieldType1:   1,
 		FieldLength1: 32,
 		FieldType2:   2,
