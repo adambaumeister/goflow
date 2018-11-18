@@ -40,6 +40,68 @@ type templateField struct {
 	Length    uint16
 }
 
+/*
+Parse a DataFlowset
+
+Requires netflowPacketTemplate to resolve the fields/byte offset
+
+func parseData (p []byte, t netflowPacketTemplate) {
+
+}
+*/
+
+/*
+ParseTemplate
+
+Slices a flow template out of an overall packet
+Requires
+	p []byte : Full packet bytes
+	s uint16 : Start of slice
+Returns
+	netFlowPacketTemplate: Struct of template
+ 	uint16: End of template slice
+*/
+func parseTemplate(p []byte) (netflowPacketTemplate, uint16) {
+
+	template := netflowPacketTemplate{
+		Fields: make(map[uint16]templateField),
+	}
+	template.Length = binary.BigEndian.Uint16(p[22:24])
+	// Calculate ending byte of the template flowset
+	tl := template.Length + 20
+	templateSlice := p[20:tl]
+	template.ID = binary.BigEndian.Uint16(templateSlice[4:6])
+
+	// Get the number of Fields
+	template.FieldCount = binary.BigEndian.Uint16(templateSlice[6:8])
+	// Start at the first fields and work through
+	fmt.Printf("L; %v, I: %v, FC: %v", template.Length, template.ID, template.FieldCount)
+	fieldStart := 8
+	var read = uint16(0)
+	for read < template.FieldCount {
+		fieldTypeEnd := fieldStart + 2
+		fieldType := binary.BigEndian.Uint16(templateSlice[fieldStart:fieldTypeEnd])
+		fieldLengthEnd := fieldTypeEnd + 2
+		fieldLength := binary.BigEndian.Uint16(templateSlice[fieldTypeEnd:fieldLengthEnd])
+
+		// Create template FIELD struct
+		field := templateField{
+			FieldType: fieldType,
+			Length:    fieldLength,
+		}
+		// Assign to fields, keyed by the type, to this template record
+		template.Fields[fieldType] = field
+
+		read++
+		fieldStart = fieldLengthEnd
+	}
+
+	for t, template := range template.Fields {
+		fmt.Printf("Type read: %v, Length: %v\n", t, template.Length)
+	}
+	return template, tl
+}
+
 func main() {
 
 	// Provides parsing for Netflow V9 Records
@@ -73,42 +135,9 @@ func main() {
 	nfpacket.Header = p
 	switch id.FlowSetID {
 	// Template flowset
-	case 0:
-		template := netflowPacketTemplate{
-			Fields: make(map[uint16]templateField),
-		}
-		template.Length = binary.BigEndian.Uint16(packet[22:24])
-		templateSlice := packet[22:template.Length]
-		template.ID = binary.BigEndian.Uint16(templateSlice[2:4])
-
-		// Get the number of Fields
-		template.FieldCount = binary.BigEndian.Uint16(templateSlice[4:6])
-		fmt.Printf("version: %v Fields %v\n", p.Version, template.FieldCount)
-
-		// Start at the first fields and work through
-		fieldStart := 6
-		var read = uint16(0)
-		for read < template.FieldCount {
-			fieldTypeEnd := fieldStart + 2
-			fieldType := binary.BigEndian.Uint16(templateSlice[fieldStart:fieldTypeEnd])
-			fieldLengthEnd := fieldTypeEnd + 2
-			fieldLength := binary.BigEndian.Uint16(templateSlice[fieldTypeEnd:fieldLengthEnd])
-
-			// Create template FIELD struct
-			field := templateField{
-				FieldType: fieldType,
-				Length:    fieldLength,
-			}
-			// Assign to fields, keyed by the type, to this template record
-			template.Fields[fieldType] = field
-
-			read++
-			fieldStart = fieldLengthEnd
-		}
-
-		for t, template := range template.Fields {
-			fmt.Printf("Type read: %v, Length: %v\n", t, template.Length)
-		}
-
+	case uint16(0):
+		t, l := parseTemplate(packet)
+		nfpacket.Templates[t.ID] = t
+		fmt.Printf("Read total: %v", l)
 	}
 }
