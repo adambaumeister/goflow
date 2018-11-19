@@ -23,8 +23,10 @@ type testPacket struct {
 	FieldType2   int16
 	FieldLength2 int16
 
-	dataFlowSetID int16
-	dataLength    int16
+	DataFlowSetID int16
+	DataLength    int16
+	DField1       uint8
+	DField2       uint16
 }
 
 func main() {
@@ -44,13 +46,19 @@ func main() {
 		// Template Headers
 		flowSetId:  0,
 		Length:     16,
-		TemplateID: 11,
+		TemplateID: 2300,
 		FieldCount: 2,
 		// Template Fields
 		FieldType1:   4,
 		FieldLength1: 1,
 		FieldType2:   7,
 		FieldLength2: 2,
+		// Data headers
+		DataFlowSetID: 2300,
+		DataLength:    7,
+		// Data fields
+		DField1: 6,
+		DField2: 34477,
 	}
 	err = binary.Write(conn, binary.BigEndian, tp)
 	if err != nil {

@@ -14,6 +14,7 @@ type netflowPacket struct {
 	Header    netflowPacketHeader
 	Length    int
 	Templates map[uint16]netflowPacketTemplate
+	Data      []netflowDataFlowset
 }
 type netflowPacketHeader struct {
 	Version  uint16
@@ -65,14 +66,20 @@ func parseData(n netflowPacket, p []byte) netflowDataFlowset {
 
 	t := n.Templates[nfd.FlowSetID]
 	start := uint16(4)
-	read := uint16(0)
 	// Read each Field in order from the flowset until the length is exceeded
-	for read < nfd.Length {
+	for start < nfd.Length {
 		fr := flowRecord{}
 		for _, f := range t.Fields {
 			value := p[start : start+f.Length]
+			switch f.FieldType {
+			case 4:
+				fmt.Printf("Field 4 value: %v\n", uint8(value[0]))
+			case 7:
+				fmt.Printf("Field  value: %v\n", binary.BigEndian.Uint16(value))
+			}
+
 			fr.Values = append(fr.Values, value)
-			read = read + f.Length
+			start = start + f.Length
 		}
 		nfd.Records = append(nfd.Records, fr)
 	}
@@ -141,7 +148,7 @@ func Route(nfp netflowPacket, p []byte, start uint16) {
 	l := uint16(0)
 
 	//fmt.Printf("End of slice: %v", start+id.Length)
-	for int(start+l) <= nfp.Length {
+	for int(start) < nfp.Length {
 		id = binary.BigEndian.Uint16(p[start : start+2])
 		l = binary.BigEndian.Uint16(p[start+2 : start+4])
 		// Slice the next flowset out
@@ -152,12 +159,12 @@ func Route(nfp netflowPacket, p []byte, start uint16) {
 		case id == uint16(0):
 			t := parseTemplate(s)
 			nfp.Templates[t.ID] = t
-			// Data flowset
+		// Data flowset
 		case id > uint16(255):
-			fmt.Printf("Yes")
+			d := parseData(nfp, s)
+			nfp.Data = append(nfp.Data, d)
 		}
 		start = start + l
-		fmt.Printf("New length: %v", start)
 	}
 }
 
