@@ -6,6 +6,19 @@ import (
 	"net"
 )
 
+// CONSTANTS
+const IN_BYTES = 1
+const IN_PKTS = 2
+const FLOWS = 3
+const PROTOCOL = 4
+const TOS = 5
+const TCP_FLAGS = 6
+const L4_SRC_PORT = 7
+
+var FUNCTIONMAP = map[uint8]func([]byte) interface{}{
+	IN_BYTES: GetInt,
+}
+
 // GENERICS
 type netflow struct {
 	Templates map[uint16]netflowPacketTemplate
@@ -49,6 +62,13 @@ type netflowDataFlowset struct {
 }
 type flowRecord struct {
 	Values []interface{}
+}
+
+func GetInt(p []byte) interface{} {
+	switch {
+	case len(p) > 1:
+		return binary.BigEndian.Uint16(p)
+	}
 }
 
 /*
