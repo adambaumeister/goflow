@@ -34,7 +34,7 @@ type netflowPacketTemplate struct {
 	Length     uint16
 	ID         uint16
 	FieldCount uint16
-	Fields     map[uint16]templateField
+	Fields     []templateField
 }
 
 type templateField struct {
@@ -54,7 +54,7 @@ Returns
 func parseTemplate(templateSlice []byte) netflowPacketTemplate {
 
 	template := netflowPacketTemplate{
-		Fields: make(map[uint16]templateField),
+		Fields: make([]templateField, 0),
 	}
 	template.ID = binary.BigEndian.Uint16(templateSlice[4:6])
 
@@ -75,15 +75,16 @@ func parseTemplate(templateSlice []byte) netflowPacketTemplate {
 			FieldType: fieldType,
 			Length:    fieldLength,
 		}
-		// Assign to fields, keyed by the type, to this template record
-		template.Fields[fieldType] = field
+		// Template fields are IN ORDER
+		// Order determines records in data flowset
+		template.Fields = append(template.Fields, field)
 
 		read++
 		fieldStart = fieldLengthEnd
 	}
 
-	for t, template := range template.Fields {
-		fmt.Printf("Type read: %v, Length: %v\n", t, template.Length)
+	for _, template := range template.Fields {
+		fmt.Printf("Type read: %v, Length: %v\n", template.FieldType, template.Length)
 	}
 	return template
 }

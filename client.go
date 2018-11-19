@@ -22,6 +22,9 @@ type testPacket struct {
 	FieldLength1 int16
 	FieldType2   int16
 	FieldLength2 int16
+
+	dataFlowSetID int16
+	dataLength    int16
 }
 
 func main() {
