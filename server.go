@@ -12,6 +12,7 @@ type netflow struct {
 
 type netflowPacket struct {
 	Header    netflowPacketHeader
+	Length    int
 	Templates map[uint16]netflowPacketTemplate
 }
 
@@ -47,10 +48,8 @@ ParseTemplate
 Slices a flow template out of an overall packet
 Requires
 	p []byte : Full packet bytes
-	s uint16 : Start byte index of slice
 Returns
 	netFlowPacketTemplate: Struct of template
- 	uint16: End byte index of slice
 */
 func parseTemplate(templateSlice []byte) netflowPacketTemplate {
 
@@ -89,18 +88,37 @@ func parseTemplate(templateSlice []byte) netflowPacketTemplate {
 	return template
 }
 
-func Route(nfp netflowPacket, p []byte, start uint16) {
-	id := netflowPacketFlowset{}
-	id.FlowSetID = binary.BigEndian.Uint16(p[start : start+2])
-	id.Length = binary.BigEndian.Uint16(p[start+2 : start+4])
+/*
+Route
+Takes an entire packet slice, and routes each flowset to the correct handler
 
-	// Slice the next flowset out
-	s := p[start : start+id.Length]
-	switch id.FlowSetID {
-	// Template flowset
-	case uint16(0):
-		t := parseTemplate(s)
-		nfp.Templates[t.ID] = t
+Requires
+	netflowPacket : netflowpacket struct
+	[]byte		  : Packet bytes
+	uint16		  : Byte index to start at (skip the headers, etc)
+*/
+func Route(nfp netflowPacket, p []byte, start uint16) {
+	id := uint16(0)
+	l := uint16(0)
+
+	//fmt.Printf("End of slice: %v", start+id.Length)
+	for int(start+l) <= nfp.Length {
+		id = binary.BigEndian.Uint16(p[start : start+2])
+		l = binary.BigEndian.Uint16(p[start+2 : start+4])
+		// Slice the next flowset out
+		s := p[start : start+l]
+		// Flowset ID is the switch we use to determine what sort of flowset follors
+		switch {
+		// Template flowset
+		case id == uint16(0):
+			t := parseTemplate(s)
+			nfp.Templates[t.ID] = t
+			// Data flowset
+		case id > uint16(255):
+			fmt.Printf("Yes")
+		}
+		start = start + l
+		fmt.Printf("New length: %v", start)
 	}
 }
 
@@ -129,7 +147,9 @@ func main() {
 	// We want to read the entire datagram in as UDP is type SOCK_DGRAM and "Read" can't be called more than once
 	packet := make([]byte, 1500)
 	// Read the max number of bytes in a datagram(1500) into a variable length slice of bytes, 'Buffer'
-	conn.Read(packet)
+	// Also set the total number of bytes read so we can check it later
+	nfpacket.Length, _ = conn.Read(packet)
+	fmt.Printf("Total packet length: %v\n", nfpacket.Length)
 	p.Version = binary.BigEndian.Uint16(packet[:2])
 	nfpacket.Header = p
 
