@@ -47,10 +47,10 @@ func main() {
 		TemplateID: 11,
 		FieldCount: 2,
 		// Template Fields
-		FieldType1:   1,
-		FieldLength1: 32,
-		FieldType2:   2,
-		FieldLength2: 48,
+		FieldType1:   4,
+		FieldLength1: 1,
+		FieldType2:   7,
+		FieldLength2: 2,
 	}
 	err = binary.Write(conn, binary.BigEndian, tp)
 	if err != nil {

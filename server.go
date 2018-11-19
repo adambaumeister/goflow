@@ -6,16 +6,15 @@ import (
 	"net"
 )
 
+// GENERICS
 type netflow struct {
 	Templates map[uint16]netflowPacketTemplate
 }
-
 type netflowPacket struct {
 	Header    netflowPacketHeader
 	Length    int
 	Templates map[uint16]netflowPacketTemplate
 }
-
 type netflowPacketHeader struct {
 	Version  uint16
 	Count    int16
@@ -23,12 +22,12 @@ type netflowPacketHeader struct {
 	Sequence int32
 	Id       int32
 }
-
 type netflowPacketFlowset struct {
 	FlowSetID uint16
 	Length    uint16
 }
 
+// TEMPLATE STRUCTS
 type netflowPacketTemplate struct {
 	FlowSetID  uint16
 	Length     uint16
@@ -36,10 +35,49 @@ type netflowPacketTemplate struct {
 	FieldCount uint16
 	Fields     []templateField
 }
-
 type templateField struct {
 	FieldType uint16
 	Length    uint16
+}
+
+// DATA STRUCTS
+type netflowDataFlowset struct {
+	FlowSetID uint16
+	Length    uint16
+	Records   []flowRecord
+}
+type flowRecord struct {
+	Values []interface{}
+}
+
+/*
+ParseData
+
+Takes a slice of a data flowset and retreives all the flow records
+Requires
+	p []byte : Data Flowset slice
+*/
+func parseData(n netflowPacket, p []byte) netflowDataFlowset {
+	nfd := netflowDataFlowset{
+		FlowSetID: binary.BigEndian.Uint16(p[:2]),
+		Length:    binary.BigEndian.Uint16(p[2:4]),
+	}
+
+	t := n.Templates[nfd.FlowSetID]
+	start := uint16(4)
+	read := uint16(0)
+	// Read each Field in order from the flowset until the length is exceeded
+	for read < nfd.Length {
+		fr := flowRecord{}
+		for _, f := range t.Fields {
+			value := p[start : start+f.Length]
+			fr.Values = append(fr.Values, value)
+			read = read + f.Length
+		}
+		nfd.Records = append(nfd.Records, fr)
+	}
+
+	return nfd
 }
 
 /*
