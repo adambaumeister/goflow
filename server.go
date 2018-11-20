@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"os"
 )
 
 // CONSTANTS
@@ -14,6 +15,14 @@ const PROTOCOL = 4
 const TOS = 5
 const TCP_FLAGS = 6
 const L4_SRC_PORT = 7
+const IPV4_SRC_ADDR = 8
+const SRC_MASK = 9
+const INPUT_SNMP = 10
+const L4_DST_PORT = 11
+const IPV4_DST_ADDR = 12
+const DST_MASK = 13
+const OUTPUT_SNMP = 14
+const IPV4_NEXT_HOP = 15
 
 var FUNCTIONMAP = map[uint16]func([]byte) interface{}{
 	IN_BYTES:    GetInt,
@@ -45,11 +54,12 @@ type netflowPacketFlowset struct {
 
 // TEMPLATE STRUCTS
 type netflowPacketTemplate struct {
-	FlowSetID  uint16
-	Length     uint16
-	ID         uint16
-	FieldCount uint16
-	Fields     []templateField
+	FlowSetID   uint16
+	Length      uint16
+	ID          uint16
+	FieldCount  uint16
+	Fields      []templateField
+	FieldLength uint16
 }
 type templateField struct {
 	FieldType uint16
@@ -68,6 +78,8 @@ type flowRecord struct {
 
 func GetInt(p []byte) interface{} {
 	switch {
+	case len(p) > 2:
+		return binary.BigEndian.Uint32(p)
 	case len(p) > 1:
 		return binary.BigEndian.Uint16(p)
 	default:
@@ -88,21 +100,35 @@ func parseData(n netflowPacket, p []byte) netflowDataFlowset {
 		Length:    binary.BigEndian.Uint16(p[2:4]),
 	}
 
+	// Return no flow records if it's empty
+	if _, ok := n.Templates[nfd.FlowSetID]; !ok {
+		return nfd
+	}
 	t := n.Templates[nfd.FlowSetID]
+
 	start := uint16(4)
 	// Read each Field in order from the flowset until the length is exceeded
 	for start < nfd.Length {
-		fr := flowRecord{}
-		for _, f := range t.Fields {
-			valueSlice := p[start : start+f.Length]
-			value := FUNCTIONMAP[f.FieldType](valueSlice)
-			fmt.Printf("Value: %v", value)
-			fr.Values = append(fr.Values, value)
-			start = start + f.Length
-		}
-		nfd.Records = append(nfd.Records, fr)
-	}
+		// Check the number of fields don't overrun the size of this flowset
+		// if so, remainder must be padding
+		if t.FieldLength <= (nfd.Length - start) {
+			fr := flowRecord{}
+			for _, f := range t.Fields {
+				valueSlice := p[start : start+f.Length]
+				if function, ok := FUNCTIONMAP[f.FieldType]; ok {
+					value := function(valueSlice)
+					fmt.Printf("Type: %v, value %v\n", f.FieldType, value)
+					fr.Values = append(fr.Values, value)
+				}
 
+				start = start + f.Length
+			}
+			nfd.Records = append(nfd.Records, fr)
+		} else {
+			fmt.Printf("Padding detected: %v\n", (nfd.Length-t.FieldLength)-4)
+			start = start + (nfd.Length - t.FieldLength)
+		}
+	}
 	return nfd
 }
 
@@ -125,7 +151,6 @@ func parseTemplate(templateSlice []byte) netflowPacketTemplate {
 	// Get the number of Fields
 	template.FieldCount = binary.BigEndian.Uint16(templateSlice[6:8])
 	// Start at the first fields and work through
-	fmt.Printf("L; %v, I: %v, FC: %v\n\n", template.Length, template.ID, template.FieldCount)
 	fieldStart := 8
 	var read = uint16(0)
 	for read < template.FieldCount {
@@ -145,11 +170,9 @@ func parseTemplate(templateSlice []byte) netflowPacketTemplate {
 
 		read++
 		fieldStart = fieldLengthEnd
+		template.FieldLength = template.FieldLength + fieldLength
 	}
-
-	for _, template := range template.Fields {
-		fmt.Printf("Type read: %v, Length: %v\n", template.FieldType, template.Length)
-	}
+	fmt.Printf("%v\n", template.FieldLength)
 	return template
 }
 
@@ -216,6 +239,11 @@ func main() {
 	nfpacket.Length, _ = conn.Read(packet)
 	fmt.Printf("Total packet length: %v\n", nfpacket.Length)
 	p.Version = binary.BigEndian.Uint16(packet[:2])
+	switch p.Version {
+	case 5:
+		fmt.Printf("Wrong Netflow version, only v9 supported.")
+		os.Exit(1)
+	}
 	nfpacket.Header = p
 
 	Route(nfpacket, packet, uint16(20))
