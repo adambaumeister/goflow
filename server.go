@@ -30,6 +30,22 @@ var FUNCTIONMAP = map[uint16]func([]byte) interface{}{
 	L4_SRC_PORT: GetInt,
 }
 
+type Value interface {
+	toString() int
+}
+
+func getStrings(i Value) int {
+	return i.toString()
+}
+
+type IntValue struct {
+	Data int
+}
+
+func (i IntValue) toString() int {
+	return i.Data
+}
+
 // GENERICS
 type netflow struct {
 	Templates map[uint16]netflowPacketTemplate
@@ -79,11 +95,11 @@ type flowRecord struct {
 func GetInt(p []byte) interface{} {
 	switch {
 	case len(p) > 2:
-		return binary.BigEndian.Uint32(p)
+		return int(binary.BigEndian.Uint32(p))
 	case len(p) > 1:
-		return binary.BigEndian.Uint16(p)
+		return int(binary.BigEndian.Uint16(p))
 	default:
-		return uint8(p[0])
+		return int(uint8(p[0]))
 	}
 }
 
@@ -247,4 +263,6 @@ func main() {
 	nfpacket.Header = p
 
 	Route(nfpacket, packet, uint16(20))
+	test := IntValue{Data: 64}
+	fmt.Printf("Testing: %v", getStrings(test))
 }
