@@ -15,8 +15,10 @@ const TOS = 5
 const TCP_FLAGS = 6
 const L4_SRC_PORT = 7
 
-var FUNCTIONMAP = map[uint8]func([]byte) interface{}{
-	IN_BYTES: GetInt,
+var FUNCTIONMAP = map[uint16]func([]byte) interface{}{
+	IN_BYTES:    GetInt,
+	PROTOCOL:    GetInt,
+	L4_SRC_PORT: GetInt,
 }
 
 // GENERICS
@@ -68,6 +70,8 @@ func GetInt(p []byte) interface{} {
 	switch {
 	case len(p) > 1:
 		return binary.BigEndian.Uint16(p)
+	default:
+		return uint8(p[0])
 	}
 }
 
@@ -90,14 +94,9 @@ func parseData(n netflowPacket, p []byte) netflowDataFlowset {
 	for start < nfd.Length {
 		fr := flowRecord{}
 		for _, f := range t.Fields {
-			value := p[start : start+f.Length]
-			switch f.FieldType {
-			case 4:
-				fmt.Printf("Field 4 value: %v\n", uint8(value[0]))
-			case 7:
-				fmt.Printf("Field  value: %v\n", binary.BigEndian.Uint16(value))
-			}
-
+			valueSlice := p[start : start+f.Length]
+			value := FUNCTIONMAP[f.FieldType](valueSlice)
+			fmt.Printf("Value: %v", value)
 			fr.Values = append(fr.Values, value)
 			start = start + f.Length
 		}
