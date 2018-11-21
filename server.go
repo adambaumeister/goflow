@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 )
 
 // CONSTANTS
@@ -24,29 +25,45 @@ const DST_MASK = 13
 const OUTPUT_SNMP = 14
 const IPV4_NEXT_HOP = 15
 
-var FUNCTIONMAP = map[uint16]func([]byte) interface{}{
-	IN_BYTES:    GetInt,
-	PROTOCOL:    GetInt,
-	L4_SRC_PORT: GetInt,
+var FUNCTIONMAP = map[uint16]func([]byte) Value{
+	IN_BYTES:      GetInt,
+	PROTOCOL:      GetInt,
+	L4_SRC_PORT:   GetInt,
+	IPV4_SRC_ADDR: GetAddr,
 }
 
+//
+// Value represents the interface to flowRecord Field values
+// Field values can be of many types but should always implement the same methods
 type Value interface {
-	toString() int
+	toString() string
 }
 
-func getStrings(i Value) int {
-	return i.toString()
-}
-
+//
+// Integer Values
+//
 type IntValue struct {
 	Data int
 }
 
-func (i IntValue) toString() int {
-	return i.Data
+func (i IntValue) toString() string {
+	return fmt.Sprintf("%v", i.Data)
 }
 
+//
+// Address Values
+//
+type AddrValue struct {
+	Data net.IP
+}
+
+func (a AddrValue) toString() string {
+	return fmt.Sprintf("%v", a.Data.String())
+}
+
+//
 // GENERICS
+//
 type netflow struct {
 	Templates map[uint16]netflowPacketTemplate
 }
@@ -89,17 +106,39 @@ type netflowDataFlowset struct {
 	Records   []flowRecord
 }
 type flowRecord struct {
-	Values []interface{}
+	Values []Value
 }
 
-func GetInt(p []byte) interface{} {
+func (r flowRecord) toString() string {
+	var sl []string
+	for _, v := range r.Values {
+		sl = append(sl, v.toString())
+	}
+	return strings.Join(sl, " : ") + "\n"
+}
+
+// Retrieve an addr value from a field
+func GetAddr(p []byte) Value {
+	var a AddrValue
+	var ip net.IP
+	ip = p
+	a.Data = ip
+	return a
+}
+
+// Retrieve integer values from a field
+func GetInt(p []byte) Value {
+	var i IntValue
 	switch {
 	case len(p) > 2:
-		return int(binary.BigEndian.Uint32(p))
+		i.Data = int(binary.BigEndian.Uint32(p))
+		return i
 	case len(p) > 1:
-		return int(binary.BigEndian.Uint16(p))
+		i.Data = int(binary.BigEndian.Uint16(p))
+		return i
 	default:
-		return int(uint8(p[0]))
+		i.Data = int(uint8(p[0]))
+		return i
 	}
 }
 
@@ -133,13 +172,13 @@ func parseData(n netflowPacket, p []byte) netflowDataFlowset {
 				valueSlice := p[start : start+f.Length]
 				if function, ok := FUNCTIONMAP[f.FieldType]; ok {
 					value := function(valueSlice)
-					fmt.Printf("Type: %v, value %v\n", f.FieldType, value)
 					fr.Values = append(fr.Values, value)
 				}
 
 				start = start + f.Length
 			}
 			nfd.Records = append(nfd.Records, fr)
+			fmt.Printf(fr.toString())
 		} else {
 			fmt.Printf("Padding detected: %v\n", (nfd.Length-t.FieldLength)-4)
 			start = start + (nfd.Length - t.FieldLength)
@@ -263,6 +302,4 @@ func main() {
 	nfpacket.Header = p
 
 	Route(nfpacket, packet, uint16(20))
-	test := IntValue{Data: 64}
-	fmt.Printf("Testing: %v", getStrings(test))
 }
