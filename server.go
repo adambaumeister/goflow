@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/binary"
 	"fmt"
+	"github.com/adamb/goflow/fields"
 	"net"
 	"os"
 	"strings"
@@ -25,40 +26,11 @@ const DST_MASK = 13
 const OUTPUT_SNMP = 14
 const IPV4_NEXT_HOP = 15
 
-var FUNCTIONMAP = map[uint16]func([]byte) Value{
-	IN_BYTES:      GetInt,
-	PROTOCOL:      GetInt,
-	L4_SRC_PORT:   GetInt,
-	IPV4_SRC_ADDR: GetAddr,
-}
-
-//
-// Value represents the interface to flowRecord Field values
-// Field values can be of many types but should always implement the same methods
-type Value interface {
-	toString() string
-}
-
-//
-// Integer Values
-//
-type IntValue struct {
-	Data int
-}
-
-func (i IntValue) toString() string {
-	return fmt.Sprintf("%v", i.Data)
-}
-
-//
-// Address Values
-//
-type AddrValue struct {
-	Data net.IP
-}
-
-func (a AddrValue) toString() string {
-	return fmt.Sprintf("%v", a.Data.String())
+var FUNCTIONMAP = map[uint16]func([]byte) fields.Value{
+	IN_BYTES:      fields.GetInt,
+	PROTOCOL:      fields.GetInt,
+	L4_SRC_PORT:   fields.GetInt,
+	IPV4_SRC_ADDR: fields.GetAddr,
 }
 
 //
@@ -106,40 +78,15 @@ type netflowDataFlowset struct {
 	Records   []flowRecord
 }
 type flowRecord struct {
-	Values []Value
+	Values []fields.Value
 }
 
 func (r flowRecord) toString() string {
 	var sl []string
 	for _, v := range r.Values {
-		sl = append(sl, v.toString())
+		sl = append(sl, v.ToString())
 	}
 	return strings.Join(sl, " : ") + "\n"
-}
-
-// Retrieve an addr value from a field
-func GetAddr(p []byte) Value {
-	var a AddrValue
-	var ip net.IP
-	ip = p
-	a.Data = ip
-	return a
-}
-
-// Retrieve integer values from a field
-func GetInt(p []byte) Value {
-	var i IntValue
-	switch {
-	case len(p) > 2:
-		i.Data = int(binary.BigEndian.Uint32(p))
-		return i
-	case len(p) > 1:
-		i.Data = int(binary.BigEndian.Uint16(p))
-		return i
-	default:
-		i.Data = int(uint8(p[0]))
-		return i
-	}
 }
 
 /*
