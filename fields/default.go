@@ -5,4 +5,5 @@ package fields
 // Field values can be of many types but should always implement the same methods
 type Value interface {
 	ToString() string
+	SetType(uint16)
 }

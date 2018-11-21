@@ -10,8 +10,12 @@ import (
 //
 type IntValue struct {
 	Data int
+	Type uint16
 }
 
+func (i IntValue) SetType(t uint16) {
+	i.Type = t
+}
 func (i IntValue) ToString() string {
 	return fmt.Sprintf("%v", i.Data)
 }
