@@ -25,12 +25,18 @@ const IPV4_DST_ADDR = 12
 const DST_MASK = 13
 const OUTPUT_SNMP = 14
 const IPV4_NEXT_HOP = 15
+const OUT_BYTES = 23
+const OUT_PKTS = 24
 
 var FUNCTIONMAP = map[uint16]func([]byte) fields.Value{
 	IN_BYTES:      fields.GetInt,
+	IN_PKTS:       fields.GetInt,
 	PROTOCOL:      fields.GetInt,
 	L4_SRC_PORT:   fields.GetInt,
 	IPV4_SRC_ADDR: fields.GetAddr,
+	IPV4_DST_ADDR: fields.GetAddr,
+	OUT_BYTES:     fields.GetInt,
+	OUT_PKTS:      fields.GetInt,
 }
 
 //
@@ -227,12 +233,12 @@ func main() {
 		fmt.Printf("Some error %v\n", err)
 		return
 	}
-
+	nf := netflow{Templates: make(map[uint16]netflowPacketTemplate)}
 	// Listen to incoming flows
 	for {
 		fmt.Printf("Listening on udp/9999\n")
 		nfpacket := netflowPacket{
-			Templates: make(map[uint16]netflowPacketTemplate),
+			Templates: nf.Templates,
 		}
 
 		p := netflowPacketHeader{}
@@ -252,5 +258,11 @@ func main() {
 		nfpacket.Header = p
 
 		Route(nfpacket, packet, uint16(20))
+		nf.Templates = nfpacket.Templates
+		for _, dfs := range nfpacket.Data {
+			for _, record := range dfs.Records {
+				fmt.Printf(record.toString())
+			}
+		}
 	}
 }
