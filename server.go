@@ -281,25 +281,29 @@ func main() {
 		return
 	}
 
-	nfpacket := netflowPacket{
-		Templates: make(map[uint16]netflowPacketTemplate),
-	}
+	// Listen to incoming flows
+	for {
+		fmt.Printf("Listening on udp/9999\n")
+		nfpacket := netflowPacket{
+			Templates: make(map[uint16]netflowPacketTemplate),
+		}
 
-	p := netflowPacketHeader{}
-	// Buffer creates an array of bytes
-	// We want to read the entire datagram in as UDP is type SOCK_DGRAM and "Read" can't be called more than once
-	packet := make([]byte, 1500)
-	// Read the max number of bytes in a datagram(1500) into a variable length slice of bytes, 'Buffer'
-	// Also set the total number of bytes read so we can check it later
-	nfpacket.Length, _ = conn.Read(packet)
-	fmt.Printf("Total packet length: %v\n", nfpacket.Length)
-	p.Version = binary.BigEndian.Uint16(packet[:2])
-	switch p.Version {
-	case 5:
-		fmt.Printf("Wrong Netflow version, only v9 supported.")
-		os.Exit(1)
-	}
-	nfpacket.Header = p
+		p := netflowPacketHeader{}
+		// Buffer creates an array of bytes
+		// We want to read the entire datagram in as UDP is type SOCK_DGRAM and "Read" can't be called more than once
+		packet := make([]byte, 1500)
+		// Read the max number of bytes in a datagram(1500) into a variable length slice of bytes, 'Buffer'
+		// Also set the total number of bytes read so we can check it later
+		nfpacket.Length, _ = conn.Read(packet)
 
-	Route(nfpacket, packet, uint16(20))
+		p.Version = binary.BigEndian.Uint16(packet[:2])
+		switch p.Version {
+		case 5:
+			fmt.Printf("Wrong Netflow version, only v9 supported.")
+			os.Exit(1)
+		}
+		nfpacket.Header = p
+
+		Route(nfpacket, packet, uint16(20))
+	}
 }
