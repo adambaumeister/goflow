@@ -11,6 +11,7 @@ import (
 )
 
 // CONSTANTS
+// Actual fields...
 const IN_BYTES = 1
 const IN_PKTS = 2
 const FLOWS = 3
@@ -29,6 +30,9 @@ const IPV4_NEXT_HOP = 15
 const OUT_BYTES = 23
 const OUT_PKTS = 24
 const LAST_SWITCHED = 21
+
+// Extension fields
+const _TIMESTAMP = 99
 
 var FUNCTIONMAP = map[uint16]func([]byte) fields.Value{
 	IN_BYTES:      fields.GetInt,
@@ -60,10 +64,11 @@ type netflowPacket struct {
 }
 type netflowPacketHeader struct {
 	Version  uint16
-	Count    int16
-	Uptime   int32
-	Sequence int32
-	Id       int32
+	Count    uint16
+	Uptime   uint32
+	Usecs    uint32
+	Sequence uint32
+	Id       uint32
 }
 type netflowPacketFlowset struct {
 	FlowSetID uint16
@@ -95,6 +100,24 @@ type flowRecord struct {
 	ValuesMap map[uint16]fields.Value
 }
 
+func (r *flowRecord) calcTime(s uint32, u uint32) uint32 {
+	/*
+		Calculate the timestamp of a record end time using the following:
+		Usecs - SysUptime + FlowEndTime
+
+		Hacked up atm because Flowalyzer doesn't send uptime properly
+	*/
+	var ts uint32
+
+	//if flowendSecs, ok := r.ValuesMap[LAST_SWITCHED]; ok {
+	if _, ok := r.ValuesMap[LAST_SWITCHED]; ok {
+		//ts = u - (s+uint32(flowendSecs.ToInt()))
+		ts = u
+		v := fields.IntValue{Data: int(ts)}
+		r.ValuesMap[_TIMESTAMP] = v
+	}
+	return ts
+}
 func (r flowRecord) toString() string {
 	var sl []string
 	for _, v := range r.Values {
@@ -142,7 +165,6 @@ func parseData(n netflowPacket, p []byte) netflowDataFlowset {
 			}
 			nfd.Records = append(nfd.Records, fr)
 		} else {
-			fmt.Printf("Padding detected: %v\n", (nfd.Length-t.FieldLength)-4)
 			start = start + (nfd.Length - t.FieldLength)
 		}
 	}
@@ -258,6 +280,8 @@ func (nf Netflow) Start(b backends.Backend) {
 		nfpacket.Length, _ = conn.Read(packet)
 
 		p.Version = binary.BigEndian.Uint16(packet[:2])
+		p.Uptime = binary.BigEndian.Uint32(packet[4:8])
+		p.Usecs = binary.BigEndian.Uint32(packet[8:12])
 		switch p.Version {
 		case 5:
 			fmt.Printf("Wrong Netflow version, only v9 supported.")
@@ -269,6 +293,7 @@ func (nf Netflow) Start(b backends.Backend) {
 		nf.Templates = nfpacket.Templates
 		for _, dfs := range nfpacket.Data {
 			for _, record := range dfs.Records {
+				record.calcTime(p.Uptime, p.Usecs)
 				b.Add(record.ValuesMap)
 			}
 		}

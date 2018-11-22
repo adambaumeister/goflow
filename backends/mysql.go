@@ -9,8 +9,8 @@ import (
 )
 
 const USE_QUERY = "USE testgoflow"
-const INIT_QUERY = `CREATE TABLE IF NOT EXISTS goflow_records (last_switched DATE, dst_ip INT(4) UNSIGNED NOT NULL )`
-const INSERT_QUERY = `INSERT INTO goflow_records (last_switched, dst_ip) VALUES ( ?, ? )`
+const INIT_QUERY = `CREATE TABLE IF NOT EXISTS goflow_records (last_switched DATETIME, dst_ip INT(4) UNSIGNED NOT NULL )`
+const INSERT_QUERY = `INSERT INTO goflow_records (last_switched, dst_ip) VALUES ( FROM_UNIXTIME(?), ? )`
 
 type Mysql struct {
 	Dbname string
@@ -55,7 +55,8 @@ func (b *Mysql) Test() {
 func (b *Mysql) Add(values map[uint16]fields.Value) {
 	db := b.db
 	s, err := db.Prepare(INSERT_QUERY)
-	_, err = s.Exec(values[21].ToInt(), values[12].ToInt())
+	fmt.Printf("%v\n", values[99].ToInt())
+	_, err = s.Exec(values[99].ToInt(), values[12].ToInt())
 	if err != nil {
 		panic(err.Error())
 	}
