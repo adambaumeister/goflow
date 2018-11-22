@@ -28,6 +28,7 @@ const OUTPUT_SNMP = 14
 const IPV4_NEXT_HOP = 15
 const OUT_BYTES = 23
 const OUT_PKTS = 24
+const LAST_SWITCHED = 21
 
 var FUNCTIONMAP = map[uint16]func([]byte) fields.Value{
 	IN_BYTES:      fields.GetInt,
@@ -39,6 +40,7 @@ var FUNCTIONMAP = map[uint16]func([]byte) fields.Value{
 	OUT_BYTES:     fields.GetInt,
 	OUT_PKTS:      fields.GetInt,
 	L4_DST_PORT:   fields.GetInt,
+	LAST_SWITCHED: fields.GetInt,
 }
 
 //
@@ -226,7 +228,6 @@ func Route(nfp netflowPacket, p []byte, start uint16) netflowPacket {
 }
 
 func (nf Netflow) Start(b backends.Backend) {
-
 	// Provides parsing for Netflow V9 Records
 	// https://www.ietf.org/rfc/rfc3954.txt
 

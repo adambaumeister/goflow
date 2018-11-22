@@ -20,6 +20,10 @@ func (i IntValue) ToString() string {
 	return fmt.Sprintf("%v", i.Data)
 }
 
+func (i IntValue) ToInt() int {
+	return i.Data
+}
+
 // Retrieve integer values from a field
 func GetInt(p []byte) Value {
 	var i IntValue

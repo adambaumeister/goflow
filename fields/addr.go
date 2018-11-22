@@ -1,6 +1,7 @@
 package fields
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net"
 )
@@ -11,6 +12,11 @@ import (
 type AddrValue struct {
 	Data net.IP
 	Type uint16
+	Int  uint32
+}
+
+func (i AddrValue) ToInt() int {
+	return int(i.Int)
 }
 
 func (i AddrValue) SetType(t uint16) {
@@ -26,5 +32,6 @@ func GetAddr(p []byte) Value {
 	var ip net.IP
 	ip = p
 	a.Data = ip
+	a.Int = binary.BigEndian.Uint32(p)
 	return a
 }

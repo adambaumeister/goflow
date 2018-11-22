@@ -11,6 +11,8 @@ func main() {
 		BindAddr: net.ParseIP("127.0.0.1"),
 		BindPort: 9999,
 	}
-	b := backends.Dump{}
-	nf.Start(b)
+
+	b := backends.Mysql{}
+	b.Init()
+	nf.Start(&b)
 }
