@@ -8,9 +8,17 @@ import (
 	"os"
 )
 
+/*
+MySQL Backend
+*/
 const USE_QUERY = "USE testgoflow"
-const INIT_QUERY = `CREATE TABLE IF NOT EXISTS goflow_records (last_switched DATETIME, dst_ip INT(4) UNSIGNED NOT NULL )`
-const INSERT_QUERY = `INSERT INTO goflow_records (last_switched, dst_ip) VALUES ( FROM_UNIXTIME(?), ? )`
+const INIT_QUERY = `CREATE TABLE IF NOT EXISTS goflow_records 
+(last_switched DATETIME,
+ src_ip INT(4) UNSIGNED NOT NULL,
+ src_port INT(2) UNSIGNED NOT NULL, 
+ dst_ip INT(4) UNSIGNED NOT NULL,
+ dst_port INT(2) UNSIGNED NOT NULL )`
+const INSERT_QUERY = `INSERT INTO goflow_records (last_switched, src_ip, src_port, dst_ip, dst_port) VALUES ( FROM_UNIXTIME(?), ?, ?, ?, ? )`
 
 type Mysql struct {
 	Dbname string
@@ -55,8 +63,13 @@ func (b *Mysql) Test() {
 func (b *Mysql) Add(values map[uint16]fields.Value) {
 	db := b.db
 	s, err := db.Prepare(INSERT_QUERY)
-	fmt.Printf("%v\n", values[99].ToInt())
-	_, err = s.Exec(values[99].ToInt(), values[12].ToInt())
+	_, err = s.Exec(
+		values[fields.TIMESTAMP].ToInt(),
+		values[fields.IPV4_SRC_ADDR].ToInt(),
+		values[fields.L4_SRC_PORT].ToInt(),
+		values[fields.IPV4_DST_ADDR].ToInt(),
+		values[fields.L4_DST_PORT].ToInt(),
+	)
 	if err != nil {
 		panic(err.Error())
 	}

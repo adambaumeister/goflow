@@ -12,27 +12,24 @@ import (
 
 // CONSTANTS
 // Actual fields...
-const IN_BYTES = 1
-const IN_PKTS = 2
-const FLOWS = 3
-const PROTOCOL = 4
-const TOS = 5
-const TCP_FLAGS = 6
-const L4_SRC_PORT = 7
-const IPV4_SRC_ADDR = 8
-const SRC_MASK = 9
-const INPUT_SNMP = 10
-const L4_DST_PORT = 11
-const IPV4_DST_ADDR = 12
-const DST_MASK = 13
-const OUTPUT_SNMP = 14
-const IPV4_NEXT_HOP = 15
-const OUT_BYTES = 23
-const OUT_PKTS = 24
-const LAST_SWITCHED = 21
+const IN_BYTES = fields.IN_BYTES
+const IN_PKTS = fields.IN_PKTS
+const FLOWS = fields.FLOWS
+const PROTOCOL = fields.PROTOCOL
+const TOS = fields.TOS
+const TCP_FLAGS = fields.TCP_FLAGS
+const L4_SRC_PORT = fields.L4_SRC_PORT
+const IPV4_SRC_ADDR = fields.IPV4_SRC_ADDR
+const SRC_MASK = fields.SRC_MASK
+const L4_DST_PORT = fields.L4_DST_PORT
+const IPV4_DST_ADDR = fields.IPV4_DST_ADDR
+const IPV4_NEXT_HOP = fields.IPV4_NEXT_HOP
+const OUT_BYTES = fields.OUT_BYTES
+const OUT_PKTS = fields.OUT_PKTS
+const LAST_SWITCHED = fields.LAST_SWITCHED
 
 // Extension fields
-const _TIMESTAMP = 99
+const _TIMESTAMP = fields.TIMESTAMP
 
 var FUNCTIONMAP = map[uint16]func([]byte) fields.Value{
 	IN_BYTES:      fields.GetInt,
@@ -263,10 +260,10 @@ func (nf Netflow) Start(b backends.Backend) {
 		fmt.Printf("Some error %v\n", err)
 		return
 	}
+	fmt.Printf("Listening on udp/9999\n")
 	nf.Templates = make(map[uint16]netflowPacketTemplate)
 	// Listen to incoming flows
 	for {
-		fmt.Printf("Listening on udp/9999\n")
 		nfpacket := netflowPacket{
 			Templates: nf.Templates,
 		}
