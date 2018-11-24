@@ -1,0 +1,4 @@
+frontends:
+  - type: netflow
+    config:
+      bindaddr: 127.0.0.1
