@@ -53,6 +53,8 @@ type Netflow struct {
 	Templates map[uint16]netflowPacketTemplate
 	BindAddr  net.IP
 	BindPort  int
+
+	backend backends.Backend
 }
 type netflowPacket struct {
 	Header    netflowPacketHeader
@@ -247,7 +249,7 @@ func Route(nfp netflowPacket, p []byte, start uint16) netflowPacket {
 	return nfp
 }
 
-func (n *Netflow) Configure(config map[string]string) {
+func (n *Netflow) Configure(config map[string]string, b backends.Backend) {
 	/*
 		Configure
 		Configures this object
@@ -261,12 +263,14 @@ func (n *Netflow) Configure(config map[string]string) {
 	if err != nil {
 		panic(err.Error())
 	}
+	n.backend = b
 }
 
-func (nf Netflow) Start(b backends.Backend) {
+func (nf Netflow) Start() {
 	// Provides parsing for Netflow V9 Records
 	// https://www.ietf.org/rfc/rfc3954.txt
-
+	b := nf.backend
+	b.Init()
 	addr := net.UDPAddr{
 		Port: nf.BindPort,
 		IP:   nf.BindAddr,

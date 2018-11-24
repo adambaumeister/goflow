@@ -28,6 +28,13 @@ type Mysql struct {
 	db     *sql.DB
 }
 
+func (b *Mysql) Configure(config map[string]string) {
+	b.Dbname = config["SQL_DATABASE"]
+	b.Dbpass = os.Getenv("SQL_PASSWORD")
+	b.Dbuser = config["SQL_USERNAME"]
+	b.Server = config["SQL_SERVER"]
+}
+
 func (b *Mysql) Init() {
 	b.Dbname = os.Getenv("SQL_DATABASE")
 	b.Dbpass = os.Getenv("SQL_PASSWORD")

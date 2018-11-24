@@ -8,5 +8,6 @@ import "github.com/adamb/goflow/fields"
 type Backend interface {
 	Init()
 	Test()
+	Configure(map[string]string)
 	Add(map[uint16]fields.Value)
 }

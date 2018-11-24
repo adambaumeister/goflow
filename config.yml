@@ -1,6 +1,16 @@
+backends:
+  rdssql:
+    type: mysql
+    config:
+      SQL_SERVER: 52.62.226.159
+      SQL_USERNAME: testgoflow
+      SQL_DB: testgoflow
+  dumper:
+    type: dump
+    config:
 frontends:
   netflow:
     config:
       bindaddr: 127.0.0.1
       bindport: 9999
-    backend: rds-sql
+    backend: rdssql
