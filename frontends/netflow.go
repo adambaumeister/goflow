@@ -7,6 +7,7 @@ import (
 	"github.com/adamb/goflow/fields"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -246,6 +247,22 @@ func Route(nfp netflowPacket, p []byte, start uint16) netflowPacket {
 	return nfp
 }
 
+func (n *Netflow) Configure(config map[string]string) {
+	/*
+		Configure
+		Configures this object
+		Requires
+			config : K/V map of configuration options
+	*/
+	var test int
+	n.BindAddr = net.ParseIP(config["bindaddr"])
+	test, err := strconv.Atoi(config["bindport"])
+	n.BindPort = test
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
 func (nf Netflow) Start(b backends.Backend) {
 	// Provides parsing for Netflow V9 Records
 	// https://www.ietf.org/rfc/rfc3954.txt
@@ -260,7 +277,7 @@ func (nf Netflow) Start(b backends.Backend) {
 		fmt.Printf("Some error %v\n", err)
 		return
 	}
-	fmt.Printf("Listening on udp/9999\n")
+	fmt.Printf("Listen on Addr: %v, Port: %v", nf.BindAddr, nf.BindPort)
 	nf.Templates = make(map[uint16]netflowPacketTemplate)
 	// Listen to incoming flows
 	for {
