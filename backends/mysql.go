@@ -19,6 +19,7 @@ const INIT_QUERY = `CREATE TABLE IF NOT EXISTS goflow_records
  dst_ip INT(4) UNSIGNED NOT NULL,
  dst_port INT(2) UNSIGNED NOT NULL )`
 const INSERT_QUERY = `INSERT INTO goflow_records (last_switched, src_ip, src_port, dst_ip, dst_port) VALUES ( FROM_UNIXTIME(?), ?, ?, ?, ? )`
+const DROP_QUERY = "DROP TABLE goflow_records"
 
 type Mysql struct {
 	Dbname string
@@ -77,6 +78,23 @@ func (b *Mysql) Add(values map[uint16]fields.Value) {
 		values[fields.IPV4_DST_ADDR].ToInt(),
 		values[fields.L4_DST_PORT].ToInt(),
 	)
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
+/*
+Re-initilize the database by dropping, and then re-adding, the schema
+This will remove all data within the DB.
+*/
+func (b *Mysql) Reinit() {
+	db := b.db
+	_, err := db.Exec(USE_QUERY)
+	_, err = db.Exec(DROP_QUERY)
+	if err != nil {
+		panic(err.Error())
+	}
+	_, err = db.Exec(INIT_QUERY)
 	if err != nil {
 		panic(err.Error())
 	}
