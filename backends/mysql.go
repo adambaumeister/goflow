@@ -37,11 +37,7 @@ func (b *Mysql) Configure(config map[string]string) {
 }
 
 func (b *Mysql) Init() {
-	b.Dbname = os.Getenv("SQL_DATABASE")
 	b.Dbpass = os.Getenv("SQL_PASSWORD")
-	b.Dbuser = os.Getenv("SQL_USERNAME")
-	b.Server = os.Getenv("SQL_SERVER")
-
 	db, err := sql.Open("mysql", fmt.Sprintf("%v:%v@tcp(%v:3306)/%v", b.Dbuser, b.Dbpass, b.Server, b.Dbname))
 
 	// Open doesn't open a connection. Validate DSN data:
