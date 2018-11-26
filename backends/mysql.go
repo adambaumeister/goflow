@@ -135,7 +135,6 @@ func (b *Mysql) Test() {
 func (b *Mysql) Add(values map[uint16]fields.Value) {
 	db := b.db
 	InsertQuery := b.schema.InsertQuery(INSERT_TEMPLATE)
-	fmt.Printf("%v\n", InsertQuery)
 	s, err := db.Prepare(InsertQuery)
 	_, err = s.Exec(
 		values[fields.TIMESTAMP].ToInt(),
