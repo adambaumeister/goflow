@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/adamb/goflow/api"
 	"github.com/adamb/goflow/config"
-	"time"
 )
 
 func main() {
+
 	gc := config.Read("config.yml")
 
 	fmt.Printf("Starting threads...")
@@ -14,5 +15,5 @@ func main() {
 	for _, f := range fe {
 		go f.Start()
 	}
-	time.Sleep(10 * time.Second)
+	api.Start()
 }
