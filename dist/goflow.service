@@ -1,0 +1,17 @@
+[Unit]
+Description=Goflow, a Golang based netflow v9 collector.
+Documentation=https://github.com/adambaumeister/goflow/releases
+After=network-online.target
+
+[Service]
+User=goflow
+Group=goflow
+Environment=SQL_PASSWORD=(pw goes here!)
+ExecStart=/etc/goflow/goflow
+WorkingDirectory=/etc/goflow 
+KillMode=control-group
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+Alias=goflow.service
