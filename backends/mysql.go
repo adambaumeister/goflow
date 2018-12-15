@@ -12,7 +12,7 @@ import (
 /*
 MySQL Backend
 */
-const USE_QUERY = "USE testgoflow"
+const USE_QUERY = "USE %v"
 const INIT_TEMPLATE = `CREATE TABLE IF NOT EXISTS goflow_records (%v);`
 const INSERT_TEMPLATE = `INSERT INTO goflow_records (%v) VALUES (%v);`
 const DROP_QUERY = "DROP TABLE goflow_records"
@@ -86,7 +86,7 @@ func (c *Column) insert() string {
 }
 
 func (b *Mysql) Configure(config map[string]string) {
-	b.Dbname = config["SQL_DATABASE"]
+	b.Dbname = config["SQL_DB"]
 	b.Dbpass = os.Getenv("SQL_PASSWORD")
 	b.Dbuser = config["SQL_USERNAME"]
 	b.Server = config["SQL_SERVER"]
@@ -113,7 +113,7 @@ func (b *Mysql) Init() {
 		panic(err.Error())
 	}
 	// Try and init the database
-	_, err = db.Exec(USE_QUERY)
+	_, err = db.Exec(fmt.Sprintf(USE_QUERY, b.Dbname))
 	if err != nil {
 		panic(err.Error())
 	}
@@ -156,7 +156,7 @@ This will remove all data within the DB.
 */
 func (b *Mysql) Reinit() {
 	db := b.db
-	_, err := db.Exec(USE_QUERY)
+	_, err := db.Exec(fmt.Sprintf(USE_QUERY, b.Dbname))
 	_, err = db.Exec(DROP_QUERY)
 	if err != nil {
 		panic(err.Error())
