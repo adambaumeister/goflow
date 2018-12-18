@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/adamb/goflow/backends"
-	"github.com/adamb/goflow/frontends"
+	"github.com/adambaumeister/goflow/backends"
+	"github.com/adambaumeister/goflow/frontends"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"

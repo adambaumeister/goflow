@@ -3,7 +3,7 @@ package backends
 import (
 	"database/sql"
 	"fmt"
-	"github.com/adamb/goflow/fields"
+	"github.com/adambaumeister/goflow/fields"
 	_ "github.com/go-sql-driver/mysql"
 	"os"
 	"strings"

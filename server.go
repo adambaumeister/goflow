@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/adamb/goflow/api"
-	"github.com/adamb/goflow/config"
+	"github.com/adambaumeister/goflow/api"
+	"github.com/adambaumeister/goflow/config"
 )
 
 func main() {

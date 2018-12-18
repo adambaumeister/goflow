@@ -1,6 +1,6 @@
 package frontends
 
-import "github.com/adamb/goflow/backends"
+import "github.com/adambaumeister/goflow/backends"
 
 //
 // Frontends are inbound interfaces for data

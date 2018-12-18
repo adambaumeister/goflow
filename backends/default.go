@@ -1,6 +1,6 @@
 package backends
 
-import "github.com/adamb/goflow/fields"
+import "github.com/adambaumeister/goflow/fields"
 
 //
 // Backends are outbound interfaces for data

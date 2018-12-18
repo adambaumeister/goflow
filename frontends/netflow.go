@@ -3,8 +3,8 @@ package frontends
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/adamb/goflow/backends"
-	"github.com/adamb/goflow/fields"
+	"github.com/adambaumeister/goflow/backends"
+	"github.com/adambaumeister/goflow/fields"
 	"net"
 	"os"
 	"strconv"

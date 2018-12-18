@@ -2,7 +2,7 @@ package backends
 
 import (
 	"fmt"
-	"github.com/adamb/goflow/fields"
+	"github.com/adambaumeister/goflow/fields"
 	"strings"
 )
 
