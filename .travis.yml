@@ -1,1 +1,4 @@
 language: go
+after_success:
+  go build goflow.go
+  echo "Nice!"
