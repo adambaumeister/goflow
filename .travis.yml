@@ -3,10 +3,10 @@ after_success:
   - go build goflow.go
   - tar -czf goflow.Linux.AMD64.tar.gz goflow config.yml
 
-  deploy:
-    provider: releases
-    api_key: $api_token
-    file: goflow.Linux.AMD64.tar.gz
-    skip_cleanup: true
-    on:
-      tags: true
+deploy:
+  provider: releases
+  api_key: $api_token
+  file: goflow.Linux.AMD64.tar.gz
+  skip_cleanup: true
+  on:
+    tags: true
