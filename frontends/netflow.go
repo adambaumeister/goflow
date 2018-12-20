@@ -33,16 +33,18 @@ const LAST_SWITCHED = fields.LAST_SWITCHED
 const _TIMESTAMP = fields.TIMESTAMP
 
 var FUNCTIONMAP = map[uint16]func([]byte) fields.Value{
-	IN_BYTES:      fields.GetInt,
-	IN_PKTS:       fields.GetInt,
-	PROTOCOL:      fields.GetInt,
-	L4_SRC_PORT:   fields.GetInt,
-	IPV4_SRC_ADDR: fields.GetAddr,
-	IPV4_DST_ADDR: fields.GetAddr,
-	OUT_BYTES:     fields.GetInt,
-	OUT_PKTS:      fields.GetInt,
-	L4_DST_PORT:   fields.GetInt,
-	LAST_SWITCHED: fields.GetInt,
+	IN_BYTES:             fields.GetInt,
+	IN_PKTS:              fields.GetInt,
+	PROTOCOL:             fields.GetInt,
+	L4_SRC_PORT:          fields.GetInt,
+	IPV4_SRC_ADDR:        fields.GetAddr,
+	IPV4_DST_ADDR:        fields.GetAddr,
+	OUT_BYTES:            fields.GetInt,
+	OUT_PKTS:             fields.GetInt,
+	L4_DST_PORT:          fields.GetInt,
+	LAST_SWITCHED:        fields.GetInt,
+	fields.IPV6_SRC_ADDR: fields.GetAddr6,
+	fields.IPV6_DST_ADDR: fields.GetAddr6,
 }
 
 //
