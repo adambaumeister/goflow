@@ -120,7 +120,7 @@ func (b *Mysql) Init() {
 	InitQuery := s.GetColumnStrings(INIT_TEMPLATE)
 
 	b.schema = &s
-	b.CheckSchema()
+
 	// Open doesn't open a connection. Validate DSN data:
 	err = db.Ping()
 	if err != nil {
@@ -135,6 +135,7 @@ func (b *Mysql) Init() {
 	if err != nil {
 		panic(err.Error())
 	}
+	b.CheckSchema()
 }
 
 func (b *Mysql) Test() {
