@@ -29,7 +29,20 @@ type Mysql struct {
 	schema *Schema
 }
 
-type Column struct {
+type Column interface {
+	InsertValue(value fields.Value) string
+	GetName() string
+	GetType() string
+	GetOptions() string
+	Init() string
+}
+
+/*
+#
+INTCOLMUMN
+#
+*/
+type IntColumn struct {
 	Name    string
 	Options string
 	Type    string
@@ -37,13 +50,48 @@ type Column struct {
 	Field   uint16
 }
 
-type Schema struct {
-	columns     []*Column
-	columnIndex map[uint16]*Column
+func (c *IntColumn) Init() string {
+	return fmt.Sprintf("%v %v %v", c.Name, c.Type, c.Options)
+}
+func (c *IntColumn) GetName() string {
+	return c.Name
+}
+func (c *IntColumn) GetType() string {
+	return c.Type
+}
+func (c *IntColumn) GetOptions() string {
+	return c.Options
 }
 
-func (s *Schema) AddColumn(f uint16, n string, t string, o string) *Column {
-	c := Column{
+/*
+Insert
+Retrieves the string required to insert a value in a column using a pre-prepared statement
+*/
+func (c *IntColumn) insert() string {
+	if len(c.Wrap) > 0 {
+		return fmt.Sprintf(c.Wrap, "?")
+	}
+	return "?"
+}
+
+/*
+InsertValue
+Retrieves the string required to insert a value in a column using normal insert statement
+*/
+func (c *IntColumn) InsertValue(v fields.Value) string {
+	if len(c.Wrap) > 0 {
+		return fmt.Sprintf(c.Wrap, v.ToInt())
+	}
+	return fmt.Sprintf("%v", v.ToInt())
+}
+
+type Schema struct {
+	columns     []Column
+	columnIndex map[uint16]Column
+}
+
+func (s *Schema) AddColumn(f uint16, n string, t string, o string) *IntColumn {
+	c := IntColumn{
 		Name:    n,
 		Options: o,
 		Type:    t,
@@ -56,26 +104,18 @@ func (s *Schema) AddColumn(f uint16, n string, t string, o string) *Column {
 func (s *Schema) GetColumnStrings(t string) string {
 	var qs []string
 	for _, col := range s.columns {
-		qs = append(qs, col.init())
+		qs = append(qs, col.Init())
 	}
 	return fmt.Sprintf(t, strings.Join(qs, ", "))
 }
 
-func (s *Schema) GetColumn(c string) *Column {
+func (s *Schema) GetColumn(c string) Column {
 	for _, col := range s.columns {
-		if col.Name == c {
+		if col.GetName() == c {
 			return col
 		}
 	}
 	return nil
-}
-
-func (s *Schema) InsertQueryValues() string {
-	var qs []string
-	for _, col := range s.columns {
-		qs = append(qs, col.insert())
-	}
-	return strings.Join(qs, ", ")
 }
 
 func (s *Schema) InsertQuery(t string, v map[uint16]fields.Value) string {
@@ -87,8 +127,8 @@ func (s *Schema) InsertQuery(t string, v map[uint16]fields.Value) string {
 
 		// Only add fields that we have configured the schema for
 		if col, ok := s.columnIndex[f]; ok {
-			insertColumn = col.Name
-			insertValue = col.insertValue(val.ToInt())
+			insertColumn = col.GetName()
+			insertValue = col.InsertValue(val)
 
 			cols = append(cols, insertColumn)
 			vals = append(vals, insertValue)
@@ -100,35 +140,9 @@ func (s *Schema) InsertQuery(t string, v map[uint16]fields.Value) string {
 func (s *Schema) InsertQueryFields() string {
 	var qs []string
 	for _, col := range s.columns {
-		qs = append(qs, col.Name)
+		qs = append(qs, col.GetName())
 	}
 	return strings.Join(qs, ", ")
-}
-
-func (c *Column) init() string {
-	return fmt.Sprintf("%v %v %v", c.Name, c.Type, c.Options)
-}
-
-/*
-Insert
-Retrieves the string required to insert a value in a column using a pre-prepared statement
-*/
-func (c *Column) insert() string {
-	if len(c.Wrap) > 0 {
-		return fmt.Sprintf(c.Wrap, "?")
-	}
-	return "?"
-}
-
-/*
-InsertValue
-Retrieves the string required to insert a value in a column using normal insert statement
-*/
-func (c *Column) insertValue(v interface{}) string {
-	if len(c.Wrap) > 0 {
-		return fmt.Sprintf(c.Wrap, v)
-	}
-	return fmt.Sprintf("%v", v)
 }
 
 func (b *Mysql) Configure(config map[string]string) {
@@ -143,7 +157,7 @@ func (b *Mysql) Init() {
 	db, err := sql.Open("mysql", fmt.Sprintf("%v:%v@tcp(%v:3306)/%v", b.Dbuser, b.Dbpass, b.Server, b.Dbname))
 	b.db = db
 	s := Schema{
-		columnIndex: make(map[uint16]*Column),
+		columnIndex: make(map[uint16]Column),
 	}
 	datetimec := s.AddColumn(fields.TIMESTAMP, "last_switched", "DATETIME", "")
 	datetimec.Wrap = "FROM_UNIXTIME(%v)"
@@ -199,7 +213,7 @@ func (b *Mysql) CheckSchema() {
 	// Columns to delete
 	var dc []string
 	// Columns to add
-	//var ac []Column
+	//var ac []IntColumn
 
 	db := b.db
 	rows, err := db.Query(CHECK_QUERY)
@@ -214,14 +228,14 @@ func (b *Mysql) CheckSchema() {
 		}
 		c := b.schema.GetColumn(field.String)
 		if c == nil {
-			dc = append(dc, c.Name)
+			dc = append(dc, c.GetName())
 		}
 	}
 
 	for _, col := range b.schema.columns {
-		if !ec[col.Name] {
-			fmt.Printf("Adding Missing col %v to schema\n", col.Name)
-			_, err := db.Query(fmt.Sprintf(ALTER_QUERY, col.Name, col.Type, col.Options))
+		if !ec[col.GetName()] {
+			fmt.Printf("Adding Missing col %v to schema\n", col.GetName())
+			_, err := db.Query(fmt.Sprintf(ALTER_QUERY, col.GetName(), col.GetType(), col.GetOptions()))
 			if err != nil {
 				panic(err.Error())
 			}
