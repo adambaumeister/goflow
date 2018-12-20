@@ -11,6 +11,6 @@ backends:
 frontends:
   netflow:
     config:
-      bindaddr: 127.0.0.1
+      bindaddr: 192.168.1.164
       bindport: 9999
-    backend: rdssql
+    backend: dumper

@@ -105,14 +105,12 @@ func (r *flowRecord) calcTime(s uint32, u uint32) uint32 {
 		Calculate the timestamp of a record end time using the following:
 		Usecs - SysUptime + FlowEndTime
 
-		Hacked up atm because Flowalyzer doesn't send uptime properly
 	*/
 	var ts uint32
 
-	//if flowendSecs, ok := r.ValuesMap[LAST_SWITCHED]; ok {
-	if _, ok := r.ValuesMap[LAST_SWITCHED]; ok {
-		//ts = u - (s+uint32(flowendSecs.ToInt()))
-		ts = u
+	if flowendSecs, ok := r.ValuesMap[LAST_SWITCHED]; ok {
+		ts = u - (s + uint32(flowendSecs.ToInt()))
+		//ts = u
 		v := fields.IntValue{Data: int(ts)}
 		r.ValuesMap[_TIMESTAMP] = v
 	}
