@@ -34,19 +34,23 @@ type Column struct {
 	Options string
 	Type    string
 	Wrap    string
+	Field   uint16
 }
 
 type Schema struct {
-	columns []*Column
+	columns     []*Column
+	columnIndex map[uint16]*Column
 }
 
-func (s *Schema) AddColumn(n string, t string, o string) *Column {
+func (s *Schema) AddColumn(f uint16, n string, t string, o string) *Column {
 	c := Column{
 		Name:    n,
 		Options: o,
 		Type:    t,
+		Field:   f,
 	}
 	s.columns = append(s.columns, &c)
+	s.columnIndex[f] = &c
 	return &c
 }
 func (s *Schema) GetColumnStrings(t string) string {
@@ -74,8 +78,23 @@ func (s *Schema) InsertQueryValues() string {
 	return strings.Join(qs, ", ")
 }
 
-func (s *Schema) InsertQuery(t string) string {
-	return fmt.Sprintf(t, s.InsertQueryFields(), s.InsertQueryValues())
+func (s *Schema) InsertQuery(t string, v map[uint16]fields.Value) string {
+	var cols []string
+	var vals []string
+	for f, val := range v {
+		var insertColumn string
+		var insertValue string
+
+		// Only add fields that we have configured the schema for
+		if col, ok := s.columnIndex[f]; ok {
+			insertColumn = col.Name
+			insertValue = col.insertValue(val.ToInt())
+
+			cols = append(cols, insertColumn)
+			vals = append(vals, insertValue)
+		}
+	}
+	return fmt.Sprintf(t, strings.Join(cols, ", "), strings.Join(vals, ", "))
 }
 
 func (s *Schema) InsertQueryFields() string {
@@ -89,11 +108,27 @@ func (s *Schema) InsertQueryFields() string {
 func (c *Column) init() string {
 	return fmt.Sprintf("%v %v %v", c.Name, c.Type, c.Options)
 }
+
+/*
+Insert
+Retrieves the string required to insert a value in a column using a pre-prepared statement
+*/
 func (c *Column) insert() string {
 	if len(c.Wrap) > 0 {
 		return fmt.Sprintf(c.Wrap, "?")
 	}
 	return "?"
+}
+
+/*
+InsertValue
+Retrieves the string required to insert a value in a column using normal insert statement
+*/
+func (c *Column) insertValue(v interface{}) string {
+	if len(c.Wrap) > 0 {
+		return fmt.Sprintf(c.Wrap, v)
+	}
+	return fmt.Sprintf("%v", v)
 }
 
 func (b *Mysql) Configure(config map[string]string) {
@@ -107,16 +142,18 @@ func (b *Mysql) Init() {
 	b.Dbpass = os.Getenv("SQL_PASSWORD")
 	db, err := sql.Open("mysql", fmt.Sprintf("%v:%v@tcp(%v:3306)/%v", b.Dbuser, b.Dbpass, b.Server, b.Dbname))
 	b.db = db
-	s := Schema{}
-	datetimec := s.AddColumn("last_switched", "DATETIME", "")
+	s := Schema{
+		columnIndex: make(map[uint16]*Column),
+	}
+	datetimec := s.AddColumn(fields.TIMESTAMP, "last_switched", "DATETIME", "")
 	datetimec.Wrap = "FROM_UNIXTIME(%v)"
-	s.AddColumn("src_ip", "INT(4)", "UNSIGNED NOT NULL")
-	s.AddColumn("src_port", "INT(2)", "UNSIGNED NOT NULL")
-	s.AddColumn("dst_ip", "INT(4)", "UNSIGNED NOT NULL")
-	s.AddColumn("dst_port", "INT(2)", "UNSIGNED NOT NULL")
-	s.AddColumn("in_bytes", "INT(8)", "UNSIGNED NOT NULL")
-	s.AddColumn("in_pkts", "INT(8)", "UNSIGNED NOT NULL")
-	s.AddColumn("protocol", "INT(1)", "UNSIGNED NOT NULL DEFAULT 6")
+	s.AddColumn(fields.IPV4_SRC_ADDR, "src_ip", "INT(4)", "UNSIGNED NOT NULL")
+	s.AddColumn(fields.L4_SRC_PORT, "src_port", "INT(2)", "UNSIGNED NOT NULL")
+	s.AddColumn(fields.IPV4_DST_ADDR, "dst_ip", "INT(4)", "UNSIGNED NOT NULL")
+	s.AddColumn(fields.L4_DST_PORT, "dst_port", "INT(2)", "UNSIGNED NOT NULL")
+	s.AddColumn(fields.IN_BYTES, "in_bytes", "INT(8)", "UNSIGNED NOT NULL")
+	s.AddColumn(fields.IN_PKTS, "in_pkts", "INT(8)", "UNSIGNED NOT NULL")
+	s.AddColumn(fields.PROTOCOL, "protocol", "INT(1)", "UNSIGNED NOT NULL DEFAULT 6")
 	InitQuery := s.GetColumnStrings(INIT_TEMPLATE)
 
 	b.schema = &s
@@ -194,18 +231,9 @@ func (b *Mysql) CheckSchema() {
 
 func (b *Mysql) Add(values map[uint16]fields.Value) {
 	db := b.db
-	InsertQuery := b.schema.InsertQuery(INSERT_TEMPLATE)
-	s, err := db.Prepare(InsertQuery)
-	_, err = s.Exec(
-		values[fields.TIMESTAMP].ToInt(),
-		values[fields.IPV4_SRC_ADDR].ToInt(),
-		values[fields.L4_SRC_PORT].ToInt(),
-		values[fields.IPV4_DST_ADDR].ToInt(),
-		values[fields.L4_DST_PORT].ToInt(),
-		values[fields.IN_BYTES].ToInt(),
-		values[fields.IN_PKTS].ToInt(),
-		values[fields.PROTOCOL].ToInt(),
-	)
+	InsertQuery := b.schema.InsertQuery(INSERT_TEMPLATE, values)
+	fmt.Printf("query: 	%v", InsertQuery)
+	_, err := db.Exec(InsertQuery)
 	if err != nil {
 		panic(err.Error())
 	}
