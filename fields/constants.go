@@ -20,6 +20,8 @@ const IPV4_NEXT_HOP = 15
 const OUT_BYTES = 23
 const OUT_PKTS = 24
 const LAST_SWITCHED = 21
+const IPV6_SRC_ADDR = 27
+const IPV6_DST_ADDR = 28
 
 // Extension fields
 const TIMESTAMP = 99

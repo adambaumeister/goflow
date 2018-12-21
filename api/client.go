@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/binary"
@@ -29,12 +29,15 @@ type testPacket struct {
 	DField2       uint16
 }
 
-func Test() {
+func TestNFFrontend() {
 	conn, err := net.Dial("udp", "127.0.0.1:9999")
 	if err != nil {
 		fmt.Printf("Some error %v", err)
 		return
 	}
+
+	//v6addr := net.ParseIP("FE80::0202:B3FF:FE1E:8329")
+
 	tp := testPacket{
 		// Header
 		version:  9,
