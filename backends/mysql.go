@@ -208,7 +208,7 @@ func (b *Mysql) Init() {
 	s := Schema{
 		columnIndex: make(map[uint16]Column),
 	}
-	datetimec := s.AddIntColumn(fields.TIMESTAMP, "last_switched", "datetime", "DEFAULT NULL")
+	datetimec := s.AddIntColumn(fields.TIMESTAMP, "last_switched", "datetime", "NOT NULL")
 	datetimec.Wrap = "FROM_UNIXTIME(%v)"
 	s.AddIntColumn(fields.IPV4_SRC_ADDR, "src_ip", "int(4)", "unsigned DEFAULT NULL")
 	s.AddIntColumn(fields.L4_SRC_PORT, "src_port", "int(2)", "unsigned NOT NULL")
