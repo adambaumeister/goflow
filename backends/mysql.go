@@ -15,9 +15,11 @@ MySQL Backend
 const USE_QUERY = "USE %v"
 const CHECK_QUERY = "SHOW COLUMNS IN goflow_records;"
 const ALTER_QUERY = "ALTER TABLE goflow_records ADD COLUMN %v %v %v;"
-const INIT_TEMPLATE = `CREATE TABLE IF NOT EXISTS goflow_records (%v);`
+const INIT_TEMPLATE = "CREATE TABLE IF NOT EXISTS goflow_records (%v, INDEX last_switched_idx (last_switched));"
+const ADD_IDX = "ALTER TABLE goflow_records ADD INDEX last_switched_idx (last_switched)"
 const INSERT_TEMPLATE = `INSERT INTO goflow_records (%v) VALUES (%v);`
 const DROP_QUERY = "DROP TABLE goflow_records"
+const ALTER_COL_QUERY = "ALTER TABLE goflow_records MODIFY COLUMN %v"
 
 type Mysql struct {
 	Dbname string
@@ -34,12 +36,14 @@ type Column interface {
 	GetName() string
 	GetType() string
 	GetOptions() string
+	getFieldString() string
 	Init() string
 }
 
 /*
 #
 INTCOLMUMN
+Integer-based column and methods
 #
 */
 type IntColumn struct {
@@ -62,16 +66,8 @@ func (c *IntColumn) GetType() string {
 func (c *IntColumn) GetOptions() string {
 	return c.Options
 }
-
-/*
-Insert
-Retrieves the string required to insert a value in a column using a pre-prepared statement
-*/
-func (c *IntColumn) insert() string {
-	if len(c.Wrap) > 0 {
-		return fmt.Sprintf(c.Wrap, "?")
-	}
-	return "?"
+func (c *IntColumn) getFieldString() string {
+	return fmt.Sprintf("%v %v %v", c.GetName(), c.GetType(), c.GetOptions())
 }
 
 /*
@@ -85,13 +81,66 @@ func (c *IntColumn) InsertValue(v fields.Value) string {
 	return fmt.Sprintf("%v", v.ToInt())
 }
 
+/*
+#
+Binary
+Binary columns for binary data
+#
+*/
+type BinaryColumn struct {
+	Name    string
+	Options string
+	Type    string
+	Wrap    string
+	Field   uint16
+}
+
+func (c *BinaryColumn) Init() string {
+	return fmt.Sprintf("%v %v %v", c.Name, c.Type, c.Options)
+}
+func (c *BinaryColumn) GetName() string {
+	return c.Name
+}
+func (c *BinaryColumn) GetType() string {
+	return c.Type
+}
+func (c *BinaryColumn) GetOptions() string {
+	return c.Options
+}
+
+/*
+InsertValue
+Retrieves the string required to insert a value in a column using normal insert statement
+*/
+func (c *BinaryColumn) InsertValue(v fields.Value) string {
+	if len(c.Wrap) > 0 {
+		return fmt.Sprintf(c.Wrap, v.ToString())
+	}
+	return fmt.Sprintf("UNHEX(\"%v\")", v.ToString())
+}
+
 type Schema struct {
 	columns     []Column
 	columnIndex map[uint16]Column
 }
 
-func (s *Schema) AddColumn(f uint16, n string, t string, o string) *IntColumn {
+func (c *BinaryColumn) getFieldString() string {
+	return fmt.Sprintf("%v %v %v", c.GetName(), c.GetType(), c.GetOptions())
+}
+
+func (s *Schema) AddIntColumn(f uint16, n string, t string, o string) *IntColumn {
 	c := IntColumn{
+		Name:    n,
+		Options: o,
+		Type:    t,
+		Field:   f,
+	}
+	s.columns = append(s.columns, &c)
+	s.columnIndex[f] = &c
+	return &c
+}
+func (s *Schema) AddBinaryColumn(f uint16, n string, t string, o string) *BinaryColumn {
+	c := BinaryColumn{
 		Name:    n,
 		Options: o,
 		Type:    t,
@@ -159,15 +208,17 @@ func (b *Mysql) Init() {
 	s := Schema{
 		columnIndex: make(map[uint16]Column),
 	}
-	datetimec := s.AddColumn(fields.TIMESTAMP, "last_switched", "DATETIME", "")
+	datetimec := s.AddIntColumn(fields.TIMESTAMP, "last_switched", "datetime", "DEFAULT NULL")
 	datetimec.Wrap = "FROM_UNIXTIME(%v)"
-	s.AddColumn(fields.IPV4_SRC_ADDR, "src_ip", "INT(4)", "UNSIGNED NOT NULL")
-	s.AddColumn(fields.L4_SRC_PORT, "src_port", "INT(2)", "UNSIGNED NOT NULL")
-	s.AddColumn(fields.IPV4_DST_ADDR, "dst_ip", "INT(4)", "UNSIGNED NOT NULL")
-	s.AddColumn(fields.L4_DST_PORT, "dst_port", "INT(2)", "UNSIGNED NOT NULL")
-	s.AddColumn(fields.IN_BYTES, "in_bytes", "INT(8)", "UNSIGNED NOT NULL")
-	s.AddColumn(fields.IN_PKTS, "in_pkts", "INT(8)", "UNSIGNED NOT NULL")
-	s.AddColumn(fields.PROTOCOL, "protocol", "INT(1)", "UNSIGNED NOT NULL DEFAULT 6")
+	s.AddIntColumn(fields.IPV4_SRC_ADDR, "src_ip", "int(4)", "unsigned DEFAULT NULL")
+	s.AddIntColumn(fields.L4_SRC_PORT, "src_port", "int(2)", "unsigned NOT NULL")
+	s.AddIntColumn(fields.IPV4_DST_ADDR, "dst_ip", "int(4)", "unsigned DEFAULT NULL")
+	s.AddIntColumn(fields.L4_DST_PORT, "dst_port", "int(2)", "unsigned NOT NULL")
+	s.AddIntColumn(fields.IN_BYTES, "in_bytes", "int(8)", "unsigned NOT NULL")
+	s.AddIntColumn(fields.IN_PKTS, "in_pkts", "int(8)", "unsigned NOT NULL")
+	s.AddIntColumn(fields.PROTOCOL, "protocol", "int(1)", "unsigned NOT NULL")
+	s.AddBinaryColumn(fields.IPV6_SRC_ADDR, "src_ipv6", "varbinary(16)", "DEFAULT NULL")
+	s.AddBinaryColumn(fields.IPV6_DST_ADDR, "dst_ipv6", "varbinary(16)", "DEFAULT NULL")
 	InitQuery := s.GetColumnStrings(INIT_TEMPLATE)
 
 	b.schema = &s
@@ -209,7 +260,7 @@ func (b *Mysql) CheckSchema() {
 		extra      sql.NullString
 	)
 	// Existing columns
-	ec := make(map[string]bool)
+	ec := make(map[string]string)
 	// Columns to delete
 	var dc []string
 	// Columns to add
@@ -222,18 +273,49 @@ func (b *Mysql) CheckSchema() {
 	}
 	for rows.Next() {
 		err := rows.Scan(&field, &FieldType, &null, &key, &HasDefault, &extra)
-		ec[field.String] = true
 		if err != nil {
 			panic(err.Error())
 		}
+		var fieldString string
+		if null.String == "YES" {
+			fieldString = fmt.Sprintf("%v %v DEFAULT NULL", field.String, FieldType.String)
+		} else {
+			fieldString = fmt.Sprintf("%v %v NOT NULL", field.String, FieldType.String)
+		}
+
+		ec[field.String] = fieldString
+
 		c := b.schema.GetColumn(field.String)
 		if c == nil {
 			dc = append(dc, c.GetName())
 		}
+
+		if field.String == "last_switched" {
+			if key.String != "MUL" {
+				fmt.Printf("Bad index %v: %v\n", field.String, extra.String)
+				_, err := db.Query(ADD_IDX)
+				if err != nil {
+					panic(err.Error())
+				}
+			}
+
+		}
 	}
 
+	fmt.Print("Undergoing schema check. If changes are found, this may take a while...\n")
 	for _, col := range b.schema.columns {
-		if !ec[col.GetName()] {
+		// Check column exists
+		if fs, ok := ec[col.GetName()]; ok {
+			// If it does, check it matches what it's sposed ta be
+			if fs != col.getFieldString() {
+				fmt.Printf("Field mismatch in schema: %v (%v should be %v)\n", col.GetName(), fs, col.getFieldString())
+				_, err := db.Query(fmt.Sprintf(ALTER_COL_QUERY, col.getFieldString()))
+				if err != nil {
+					panic(err.Error())
+				}
+
+			}
+		} else {
 			fmt.Printf("Adding Missing col %v to schema\n", col.GetName())
 			_, err := db.Query(fmt.Sprintf(ALTER_QUERY, col.GetName(), col.GetType(), col.GetOptions()))
 			if err != nil {
@@ -241,12 +323,14 @@ func (b *Mysql) CheckSchema() {
 			}
 		}
 	}
+
+	fmt.Print("Schema check done!\n")
 }
 
 func (b *Mysql) Add(values map[uint16]fields.Value) {
 	db := b.db
 	InsertQuery := b.schema.InsertQuery(INSERT_TEMPLATE, values)
-	fmt.Printf("query: 	%v", InsertQuery)
+	//fmt.Printf("query: 	%v\n", InsertQuery)
 	_, err := db.Exec(InsertQuery)
 	if err != nil {
 		panic(err.Error())

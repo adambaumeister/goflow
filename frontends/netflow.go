@@ -105,13 +105,17 @@ type flowRecord struct {
 func (r *flowRecord) calcTime(s uint32, u uint32) uint32 {
 	/*
 		Calculate the timestamp of a record end time using the following:
-		Usecs - SysUptime + FlowEndTime
+		u = Unix seconds timestamp (seconds)
+		s = SysUptimes (msecs)
+		LAST_SWITCHED = last switched field (msecs)
+		Usecs - SysUptime - FlowEndTime
 
 	*/
 	var ts uint32
 
 	if flowendSecs, ok := r.ValuesMap[LAST_SWITCHED]; ok {
-		ts = u - (s + uint32(flowendSecs.ToInt()))
+		//fmt.Printf("DEBUG UPTIME: %v, EPOCH: %v, LAST_SWITCHED: %v", s, u, flowendSecs )
+		ts = u - (s / 1000) + (uint32(flowendSecs.ToInt()) / 1000)
 		//ts = u
 		v := fields.IntValue{Data: int(ts)}
 		r.ValuesMap[_TIMESTAMP] = v
@@ -295,7 +299,8 @@ func (nf Netflow) Start() {
 		packet := make([]byte, 1500)
 		// Read the max number of bytes in a datagram(1500) into a variable length slice of bytes, 'Buffer'
 		// Also set the total number of bytes read so we can check it later
-		nfpacket.Length, _ = conn.Read(packet)
+		//var addr *net.UDPAddr
+		nfpacket.Length, _, _ = conn.ReadFromUDP(packet)
 
 		p.Version = binary.BigEndian.Uint16(packet[:2])
 		p.Uptime = binary.BigEndian.Uint32(packet[4:8])
