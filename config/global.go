@@ -2,6 +2,8 @@ package config
 
 import (
 	"github.com/adambaumeister/goflow/backends"
+	"github.com/adambaumeister/goflow/backends/mysql"
+	"github.com/adambaumeister/goflow/backends/timescale"
 	"github.com/adambaumeister/goflow/frontends"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -42,7 +44,11 @@ func (gc *GlobalConfig) getBackends() map[string]backends.Backend {
 	for n, bc := range gc.Backends {
 		switch bc.Type {
 		case "mysql":
-			b := backends.Mysql{}
+			b := mysql.Mysql{}
+			b.Configure(gc.Backends[n].Config)
+			bm[n] = &b
+		case "timescale":
+			b := timescale.Tsdb{}
 			b.Configure(gc.Backends[n].Config)
 			bm[n] = &b
 		case "dump":
