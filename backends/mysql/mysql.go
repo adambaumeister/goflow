@@ -1,4 +1,4 @@
-package backends
+package mysql
 
 import (
 	"database/sql"
@@ -13,13 +13,6 @@ import (
 MySQL Backend
 */
 const USE_QUERY = "USE %v"
-const CHECK_QUERY = "SHOW COLUMNS IN goflow_records;"
-const ALTER_QUERY = "ALTER TABLE goflow_records ADD COLUMN %v %v %v;"
-const INIT_TEMPLATE = "CREATE TABLE IF NOT EXISTS goflow_records (%v, INDEX last_switched_idx (last_switched));"
-const ADD_IDX = "ALTER TABLE goflow_records ADD INDEX last_switched_idx (last_switched)"
-const INSERT_TEMPLATE = `INSERT INTO goflow_records (%v) VALUES (%v);`
-const DROP_QUERY = "DROP TABLE goflow_records"
-const ALTER_COL_QUERY = "ALTER TABLE goflow_records MODIFY COLUMN %v"
 
 type Mysql struct {
 	Dbname string
@@ -29,6 +22,14 @@ type Mysql struct {
 	db     *sql.DB
 
 	schema *Schema
+
+	CheckQuery    string
+	AlterQuery    string
+	InitQuery     string
+	AddIndexQuery string
+	InsertQuery   string
+	DropQuery     string
+	AlterColQuery string
 }
 
 type Column interface {
@@ -202,6 +203,15 @@ func (b *Mysql) Configure(config map[string]string) {
 }
 
 func (b *Mysql) Init() {
+
+	b.CheckQuery = "SHOW COLUMNS IN goflow_records;"
+	b.AlterQuery = "ALTER TABLE goflow_records ADD COLUMN %v %v %v;"
+	b.InitQuery = "CREATE TABLE IF NOT EXISTS goflow_records (%v, INDEX last_switched_idx (last_switched));"
+	b.AddIndexQuery = "ALTER TABLE goflow_records ADD INDEX last_switched_idx (last_switched)"
+	b.InsertQuery = "INSERT INTO goflow_records (%v) VALUES (%v);"
+	b.DropQuery = "DROP TABLE goflow_records"
+	b.AlterColQuery = "ALTER TABLE goflow_records MODIFY COLUMN %v"
+
 	b.Dbpass = os.Getenv("SQL_PASSWORD")
 	db, err := sql.Open("mysql", fmt.Sprintf("%v:%v@tcp(%v:3306)/%v", b.Dbuser, b.Dbpass, b.Server, b.Dbname))
 	b.db = db
@@ -219,7 +229,7 @@ func (b *Mysql) Init() {
 	s.AddIntColumn(fields.PROTOCOL, "protocol", "int(1)", "unsigned NOT NULL")
 	s.AddBinaryColumn(fields.IPV6_SRC_ADDR, "src_ipv6", "varbinary(16)", "DEFAULT NULL")
 	s.AddBinaryColumn(fields.IPV6_DST_ADDR, "dst_ipv6", "varbinary(16)", "DEFAULT NULL")
-	InitQuery := s.GetColumnStrings(INIT_TEMPLATE)
+	InitQuery := s.GetColumnStrings(b.InitQuery)
 
 	b.schema = &s
 
@@ -267,7 +277,7 @@ func (b *Mysql) CheckSchema() {
 	//var ac []IntColumn
 
 	db := b.db
-	rows, err := db.Query(CHECK_QUERY)
+	rows, err := db.Query(b.CheckQuery)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -293,7 +303,7 @@ func (b *Mysql) CheckSchema() {
 		if field.String == "last_switched" {
 			if key.String != "MUL" {
 				fmt.Printf("Bad index %v: %v\n", field.String, extra.String)
-				_, err := db.Query(ADD_IDX)
+				_, err := db.Query(b.AddIndexQuery)
 				if err != nil {
 					panic(err.Error())
 				}
@@ -309,7 +319,7 @@ func (b *Mysql) CheckSchema() {
 			// If it does, check it matches what it's sposed ta be
 			if fs != col.getFieldString() {
 				fmt.Printf("Field mismatch in schema: %v (%v should be %v)\n", col.GetName(), fs, col.getFieldString())
-				_, err := db.Query(fmt.Sprintf(ALTER_COL_QUERY, col.getFieldString()))
+				_, err := db.Query(fmt.Sprintf(b.AlterColQuery, col.getFieldString()))
 				if err != nil {
 					panic(err.Error())
 				}
@@ -317,7 +327,7 @@ func (b *Mysql) CheckSchema() {
 			}
 		} else {
 			fmt.Printf("Adding Missing col %v to schema\n", col.GetName())
-			_, err := db.Query(fmt.Sprintf(ALTER_QUERY, col.GetName(), col.GetType(), col.GetOptions()))
+			_, err := db.Query(fmt.Sprintf(b.AlterQuery, col.GetName(), col.GetType(), col.GetOptions()))
 			if err != nil {
 				panic(err.Error())
 			}
@@ -329,7 +339,7 @@ func (b *Mysql) CheckSchema() {
 
 func (b *Mysql) Add(values map[uint16]fields.Value) {
 	db := b.db
-	InsertQuery := b.schema.InsertQuery(INSERT_TEMPLATE, values)
+	InsertQuery := b.schema.InsertQuery(b.InsertQuery, values)
 	//fmt.Printf("query: 	%v\n", InsertQuery)
 	_, err := db.Exec(InsertQuery)
 	if err != nil {
@@ -344,11 +354,11 @@ This will remove all data within the DB.
 func (b *Mysql) Reinit() {
 	db := b.db
 	_, err := db.Exec(fmt.Sprintf(USE_QUERY, b.Dbname))
-	_, err = db.Exec(DROP_QUERY)
+	_, err = db.Exec(b.DropQuery)
 	if err != nil {
 		panic(err.Error())
 	}
-	InitQuery := b.schema.GetColumnStrings(INIT_TEMPLATE)
+	InitQuery := b.schema.GetColumnStrings(b.InitQuery)
 	_, err = db.Exec(InitQuery)
 	if err != nil {
 		panic(err.Error())

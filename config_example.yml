@@ -1,0 +1,30 @@
+### Goflow Configuration file
+### Backend configuration
+###
+backends:
+  rdssql:
+    # Currently supported types:
+    # - mysql
+    # - timescale
+    # - dumper
+    type: mysql
+    config:
+      SQL_SERVER: your-sql-server.com
+      SQL_USERNAME: your-sql-username
+      SQL_DB: your-database-name
+      # SQL_PASSWORD can be specified here but preferably, set it in the environment
+  dumper:
+    type: dump
+    config:
+###
+### Frontend config
+###
+frontends:
+  netflow:
+    config:
+      # Bindaddr: IP address on local system to listen for netflow
+      bindaddr: 192.168.1.164
+      # Bindport: Port to listen on
+      bindport: 9999
+    # Backend to store data received by this frontend
+    backend: rdssql

@@ -1,7 +1,7 @@
 language: go
 after_success:
   - go build goflow.go
-  - tar -czf goflow.Linux.AMD64.tar.gz goflow config.yml
+  - tar -czf goflow.Linux.AMD64.tar.gz goflow config_example.yml
 
 deploy:
   provider: releases
