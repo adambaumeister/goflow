@@ -213,8 +213,8 @@ func (b *Tsdb) Init() {
 	s := Schema{
 		columnIndex: make(map[uint16]Column),
 	}
-	s.AddIntColumn(fields.TIMESTAMP, "last_switched", "TIMESTAMPTZ", "NOT NULL")
-	//datetimec.Wrap = "FROM_UNIXTIME(%v)"
+	datetimec := s.AddIntColumn(fields.TIMESTAMP, "last_switched", "TIMESTAMPTZ", "NOT NULL")
+	datetimec.Wrap = "to_timestamp(%v)"
 	s.AddIntColumn(fields.IPV4_SRC_ADDR, "src_ip", "integer", "DEFAULT NULL")
 	s.AddIntColumn(fields.L4_SRC_PORT, "src_port", "integer", "NOT NULL")
 	s.AddIntColumn(fields.IPV4_DST_ADDR, "dst_ip", "integer", "DEFAULT NULL")
@@ -322,6 +322,7 @@ func (b *Tsdb) Add(values map[uint16]fields.Value) {
 	//fmt.Printf("query: 	%v\n", InsertQuery)
 	_, err := db.Exec(InsertQuery)
 	if err != nil {
+		fmt.Printf("%v", InsertQuery)
 		panic(err.Error())
 	}
 }
