@@ -1,6 +1,8 @@
 # **This is pre-release software. Use at your own risk!**
 # Description
 
+![Imgur](https://i.imgur.com/HdIxEOB.png)
+
 This is a very early release of Goflow, a golang-based netflow collector with a flexible backend.
 
 Right now, there are many features not implemented and only one supported frontend/backend (netflow/mysql, respectively).
