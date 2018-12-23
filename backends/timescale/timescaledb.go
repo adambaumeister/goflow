@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/adambaumeister/goflow/fields"
 	_ "github.com/lib/pq"
+	"net"
 	"os"
 	"strings"
 )
@@ -112,7 +113,10 @@ func (c *BinaryColumn) InsertValue(v fields.Value) string {
 	if len(c.Wrap) > 0 {
 		return fmt.Sprintf(c.Wrap, v.ToString())
 	}
-	return fmt.Sprintf("UNHEX(\"%v\")", v.ToString())
+	var ip = net.IP{}
+	ip = v.ToBytes()
+
+	return fmt.Sprintf("'%v'", ip.String())
 }
 
 type Schema struct {
@@ -222,8 +226,8 @@ func (b *Tsdb) Init() {
 	s.AddIntColumn(fields.IN_BYTES, "in_bytes", "integer", "NOT NULL")
 	s.AddIntColumn(fields.IN_PKTS, "in_pkts", "integer", "NOT NULL")
 	s.AddIntColumn(fields.PROTOCOL, "protocol", "integer", "NOT NULL")
-	s.AddBinaryColumn(fields.IPV6_SRC_ADDR, "src_ipv6", "bit varying(128)", "DEFAULT NULL")
-	s.AddBinaryColumn(fields.IPV6_DST_ADDR, "dst_ipv6", "bit varying(128)", "DEFAULT NULL")
+	s.AddBinaryColumn(fields.IPV6_SRC_ADDR, "src_ipv6", "inet", "DEFAULT NULL")
+	s.AddBinaryColumn(fields.IPV6_DST_ADDR, "dst_ipv6", "inet", "DEFAULT NULL")
 	InitQuery := s.GetColumnStrings(b.InitQuery)
 
 	b.schema = &s

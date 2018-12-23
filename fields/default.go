@@ -7,4 +7,5 @@ type Value interface {
 	ToString() string
 	SetType(uint16)
 	ToInt() int
+	ToBytes() []byte
 }
