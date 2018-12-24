@@ -8,6 +8,9 @@ import (
 
 func main() {
 
+	c := api.Commands{}
+	c.Parse()
+
 	gc := config.Read("config.yml")
 
 	fmt.Printf("Starting threads...")

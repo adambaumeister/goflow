@@ -7,9 +7,6 @@ backends:
       #SQL_SERVER: 52.62.226.159
       #SQL_USERNAME: testgoflow
       SQL_DB: testgoflow
-  dumper:
-    type: dump
-    config:
 frontends:
   netflow:
     config:

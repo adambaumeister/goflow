@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/adambaumeister/goflow/config"
 	"log"
@@ -10,6 +11,10 @@ import (
 type API struct {
 	c      chan string
 	config *config.GlobalConfig
+}
+
+type JsonMessage struct {
+	Msg string
 }
 
 func Start(gc *config.GlobalConfig) {
@@ -29,10 +34,16 @@ func (a *API) getHandler(w http.ResponseWriter, r *http.Request) {
 func (a *API) Test(w http.ResponseWriter, r *http.Request) {
 	var s string
 	b := a.config.GetBackends()
-	fmt.Fprintf(w, "Status:")
 	for _, be := range b {
 		s = s + be.Test() + "\n"
 	}
+	jm := JsonMessage{
+		Msg: s,
+	}
+	j, err := json.Marshal(jm)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
 
-	fmt.Fprintf(w, s)
+	w.Write(j)
 }
