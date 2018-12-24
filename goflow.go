@@ -15,5 +15,5 @@ func main() {
 	for _, f := range fe {
 		go f.Start()
 	}
-	api.Start()
+	api.Start(&gc)
 }

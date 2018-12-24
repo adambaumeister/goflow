@@ -250,11 +250,12 @@ func (b *Mysql) Init() {
 	b.CheckSchema()
 }
 
-func (b *Mysql) Test() {
+func (b *Mysql) Test() string {
 	err := b.db.Ping()
 	if err != nil {
 		panic(err.Error())
 	}
+	return "Works!"
 }
 
 func (b *Mysql) CheckSchema() {

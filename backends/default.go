@@ -7,7 +7,7 @@ import "github.com/adambaumeister/goflow/fields"
 //
 type Backend interface {
 	Init()
-	Test()
+	Test() string
 	Configure(map[string]string)
 	Add(map[uint16]fields.Value)
 }
