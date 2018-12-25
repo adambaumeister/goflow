@@ -33,9 +33,9 @@ func (c *Commands) Parse() {
 
 	// Setup the routes
 	testPath := Path{
-		Url: "/test",
+		Url: "/status",
 	}
-	c.Paths["test"] = &testPath
+	c.Paths["status"] = &testPath
 	if len(os.Args) > 1 {
 		c.Paths[os.Args[1]].Get()
 		os.Exit(0)

@@ -22,8 +22,8 @@ func Start(gc *config.GlobalConfig) {
 	a.config = gc
 
 	http.HandleFunc("/", a.getHandler)
-	http.HandleFunc("/test", a.Test)
-	log.Fatal(http.ListenAndServe(":8880", nil))
+	http.HandleFunc("/status", a.Test)
+	log.Fatal(http.ListenAndServe("127.0.0.1:8880", nil))
 
 }
 

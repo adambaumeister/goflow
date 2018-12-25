@@ -10,7 +10,14 @@ import (
 	"strings"
 )
 
-const TEST_QUERY = "SELECT * FROM hypertable_relation_size('goflow_records');"
+const SIZE_QUERY = "SELECT * FROM hypertable_relation_size('goflow_records');"
+const TEST_QUERY = `SELECT MIN(last_switched) as minday, MAX(last_switched) as maxday, count(last_switched)
+, count(last_switched)/
+( EXTRACT(hour FROM MAX(last_switched) - MIN(last_switched))*60*60
+       + EXTRACT(minutes FROM MAX(last_switched) - MIN(last_switched))*60
+       + EXTRACT(seconds FROM MAX(last_switched) - MIN(last_switched))
+) AS fps
+ FROM goflow_records;`
 
 type Tsdb struct {
 	Dbname string
@@ -277,19 +284,29 @@ func (b *Tsdb) Test() string {
 		index_bytes sql.NullString
 		toast_bytes sql.NullString
 		total_bytes sql.NullString
+
+		minday     sql.NullString
+		maxday     sql.NullString
+		totalflows sql.NullString
+		fps        sql.NullString
 	)
 
-	rows, err := db.Query(TEST_QUERY)
-	if err != nil {
-		panic(err.Error())
-	}
+	rows, err := db.Query(SIZE_QUERY)
 	for rows.Next() {
 		err := rows.Scan(&table_bytes, &index_bytes, &toast_bytes, &total_bytes)
 		if err != nil {
 			panic(err.Error())
 		}
 	}
-	return fmt.Sprintf("Table size: %v Bytes, Index: %v Bytes", table_bytes.String, index_bytes.String)
+	rows, err = db.Query(TEST_QUERY)
+	for rows.Next() {
+		err := rows.Scan(&minday, &maxday, &totalflows, &fps)
+		if err != nil {
+			panic(err.Error())
+		}
+	}
+
+	return fmt.Sprintf("Timescale DB Status: Table size: %v Bytes, Index: %v Bytes, Flows/second: %v", table_bytes.String, index_bytes.String, fps.String)
 
 }
 
