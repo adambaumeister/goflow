@@ -13,6 +13,7 @@ import (
 MySQL Backend
 */
 const USE_QUERY = "USE %v"
+const TEST_QUERY = "SELECT count(last_switched)/TIMESTAMPDIFF(SECOND, MIN(last_switched), MAX(last_switched)) AS fps, MAX(last_switched), MIN(last_switched) FROM goflow_records;"
 
 type Mysql struct {
 	Dbname string
@@ -202,6 +203,15 @@ func (b *Mysql) Configure(config map[string]string) {
 	b.Server = config["SQL_SERVER"]
 }
 
+func (b *Mysql) connect() *sql.DB {
+	b.Dbpass = os.Getenv("SQL_PASSWORD")
+	db, err := sql.Open("mysql", fmt.Sprintf("%v:%v@tcp(%v:3306)/%v", b.Dbuser, b.Dbpass, b.Server, b.Dbname))
+	if err != nil {
+		panic(err.Error())
+	}
+	return db
+}
+
 func (b *Mysql) Init() {
 
 	b.CheckQuery = "SHOW COLUMNS IN goflow_records;"
@@ -213,7 +223,7 @@ func (b *Mysql) Init() {
 	b.AlterColQuery = "ALTER TABLE goflow_records MODIFY COLUMN %v"
 
 	b.Dbpass = os.Getenv("SQL_PASSWORD")
-	db, err := sql.Open("mysql", fmt.Sprintf("%v:%v@tcp(%v:3306)/%v", b.Dbuser, b.Dbpass, b.Server, b.Dbname))
+	db := b.connect()
 	b.db = db
 	s := Schema{
 		columnIndex: make(map[uint16]Column),
@@ -234,7 +244,7 @@ func (b *Mysql) Init() {
 	b.schema = &s
 
 	// Open doesn't open a connection. Validate DSN data:
-	err = db.Ping()
+	err := db.Ping()
 	if err != nil {
 		panic(err.Error())
 	}
@@ -250,11 +260,27 @@ func (b *Mysql) Init() {
 	b.CheckSchema()
 }
 
-func (b *Mysql) Test() {
-	err := b.db.Ping()
+func (b *Mysql) Test() string {
+	db := b.connect()
+	err := db.Ping()
 	if err != nil {
 		panic(err.Error())
 	}
+
+	var (
+		minday sql.NullString
+		maxday sql.NullString
+		fps    sql.NullString
+	)
+	rows, err := db.Query(TEST_QUERY)
+	for rows.Next() {
+		err := rows.Scan(&fps, &minday, &maxday)
+		if err != nil {
+			panic(err.Error())
+		}
+	}
+
+	return fmt.Sprintf("MYSQL status: Flows/second: %v, Last Flow received: %v", fps.String, maxday.String)
 }
 
 func (b *Mysql) CheckSchema() {

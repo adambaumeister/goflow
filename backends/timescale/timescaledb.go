@@ -10,6 +10,15 @@ import (
 	"strings"
 )
 
+const SIZE_QUERY = "SELECT * FROM hypertable_relation_size('goflow_records');"
+const TEST_QUERY = `SELECT MIN(last_switched) as minday, MAX(last_switched) as maxday, count(last_switched)
+, count(last_switched)/
+( EXTRACT(hour FROM MAX(last_switched) - MIN(last_switched))*60*60
+       + EXTRACT(minutes FROM MAX(last_switched) - MIN(last_switched))*60
+       + EXTRACT(seconds FROM MAX(last_switched) - MIN(last_switched))
+) AS fps
+ FROM goflow_records;`
+
 type Tsdb struct {
 	Dbname string
 	Dbpass string
@@ -201,6 +210,14 @@ func (b *Tsdb) Configure(config map[string]string) {
 	b.Server = config["SQL_SERVER"]
 }
 
+func (b *Tsdb) connect() *sql.DB {
+	b.Dbpass = os.Getenv("SQL_PASSWORD")
+	db, err := sql.Open("postgres", fmt.Sprintf("user=%v password=%v host=%v dbname=%v", b.Dbuser, b.Dbpass, b.Server, b.Dbname))
+	if err != nil {
+		panic(err.Error())
+	}
+	return db
+}
 func (b *Tsdb) Init() {
 
 	b.CheckQuery = "select column_name, data_type, character_maximum_length from INFORMATION_SCHEMA.COLUMNS where table_name = 'goflow_records';"
@@ -211,9 +228,6 @@ func (b *Tsdb) Init() {
 	b.DropQuery = "DROP TABLE goflow_records"
 	b.AlterColQuery = "ALTER TABLE goflow_records MODIFY COLUMN %v"
 
-	b.Dbpass = os.Getenv("SQL_PASSWORD")
-	db, err := sql.Open("postgres", fmt.Sprintf("user=%v password=%v host=%v dbname=%v", b.Dbuser, b.Dbpass, b.Server, b.Dbname))
-	b.db = db
 	s := Schema{
 		columnIndex: make(map[uint16]Column),
 	}
@@ -230,10 +244,12 @@ func (b *Tsdb) Init() {
 	s.AddBinaryColumn(fields.IPV6_DST_ADDR, "dst_ipv6", "inet", "DEFAULT NULL")
 	InitQuery := s.GetColumnStrings(b.InitQuery)
 
+	db := b.connect()
+	b.db = db
 	b.schema = &s
 
 	// Open doesn't open a connection. Validate DSN data:
-	err = db.Ping()
+	err := db.Ping()
 	if err != nil {
 		panic(err.Error())
 	}
@@ -256,11 +272,42 @@ func (b *Tsdb) Init() {
 	b.CheckSchema()
 }
 
-func (b *Tsdb) Test() {
-	err := b.db.Ping()
+func (b *Tsdb) Test() string {
+	db := b.connect()
+	err := db.Ping()
 	if err != nil {
 		panic(err.Error())
 	}
+
+	var (
+		table_bytes sql.NullString
+		index_bytes sql.NullString
+		toast_bytes sql.NullString
+		total_bytes sql.NullString
+
+		minday     sql.NullString
+		maxday     sql.NullString
+		totalflows sql.NullString
+		fps        sql.NullString
+	)
+
+	rows, err := db.Query(SIZE_QUERY)
+	for rows.Next() {
+		err := rows.Scan(&table_bytes, &index_bytes, &toast_bytes, &total_bytes)
+		if err != nil {
+			panic(err.Error())
+		}
+	}
+	rows, err = db.Query(TEST_QUERY)
+	for rows.Next() {
+		err := rows.Scan(&minday, &maxday, &totalflows, &fps)
+		if err != nil {
+			panic(err.Error())
+		}
+	}
+
+	return fmt.Sprintf("Timescale DB Status: Table size: %v Bytes, Index: %v Bytes, Flows/second: %v", table_bytes.String, index_bytes.String, fps.String)
+
 }
 
 func (b *Tsdb) CheckSchema() {

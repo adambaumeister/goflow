@@ -7,12 +7,11 @@ backends:
       SQL_SERVER: 52.62.226.159
       SQL_USERNAME: testgoflow
       SQL_DB: testgoflow
-  dumper:
-    type: dump
-    config:
 frontends:
   netflow:
     config:
       bindaddr: 192.168.1.164
       bindport: 9999
     backend: rdssql
+
+api: 127.0.0.1:8880

@@ -8,6 +8,9 @@ import (
 
 func main() {
 
+	c := api.Commands{}
+	c.Parse()
+
 	gc := config.Read("config.yml")
 
 	fmt.Printf("Starting threads...")
@@ -15,5 +18,5 @@ func main() {
 	for _, f := range fe {
 		go f.Start()
 	}
-	api.Start()
+	api.Start(&gc)
 }

@@ -8,7 +8,7 @@ import (
 
 type Dump struct{}
 
-func (b Dump) Test()                              {}
+func (b Dump) Test() string                       { return "Works!" }
 func (b Dump) Init()                              {}
 func (b Dump) Configure(config map[string]string) {}
 

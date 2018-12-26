@@ -1,20 +1,30 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/adambaumeister/goflow/config"
 	"log"
 	"net/http"
 )
 
 type API struct {
-	c chan string
+	c      chan string
+	config *config.GlobalConfig
 }
 
-func Start() {
+type JsonMessage struct {
+	Msg string
+}
+
+func Start(gc *config.GlobalConfig) {
 	a := API{}
+	a.config = gc
+
 	http.HandleFunc("/", a.getHandler)
-	http.HandleFunc("/test", a.Test)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	http.HandleFunc("/status", a.Test)
+	log.Fatal(http.ListenAndServe(a.config.Api, nil))
+
 }
 
 func (a *API) getHandler(w http.ResponseWriter, r *http.Request) {
@@ -22,5 +32,18 @@ func (a *API) getHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) Test(w http.ResponseWriter, r *http.Request) {
-	TestNFFrontend()
+	var s string
+	b := a.config.GetBackends()
+	for _, be := range b {
+		s = s + be.Test() + "\n"
+	}
+	jm := JsonMessage{
+		Msg: s,
+	}
+	j, err := json.Marshal(jm)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	w.Write(j)
 }

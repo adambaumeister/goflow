@@ -28,3 +28,9 @@ frontends:
       bindport: 9999
     # Backend to store data received by this frontend
     backend: rdssql
+
+###
+### API config
+###
+# Specify bindaddr for API
+api: 127.0.0.1:8880

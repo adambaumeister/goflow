@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/adambaumeister/goflow/backends"
 	"github.com/adambaumeister/goflow/backends/mysql"
 	"github.com/adambaumeister/goflow/backends/timescale"
@@ -13,6 +14,7 @@ import (
 type GlobalConfig struct {
 	Frontends map[string]FrontendConfig
 	Backends  map[string]BackendConfig
+	Api       string
 }
 
 type FrontendConfig struct {
@@ -39,7 +41,7 @@ func Read(filename string) GlobalConfig {
 	return gc
 }
 
-func (gc *GlobalConfig) getBackends() map[string]backends.Backend {
+func (gc *GlobalConfig) GetBackends() map[string]backends.Backend {
 	bm := make(map[string]backends.Backend)
 	for n, bc := range gc.Backends {
 		switch bc.Type {
@@ -55,6 +57,8 @@ func (gc *GlobalConfig) getBackends() map[string]backends.Backend {
 			b := backends.Dump{}
 			b.Configure(gc.Backends[n].Config)
 			bm[n] = &b
+		default:
+			panic(fmt.Sprintf("Error: Invalid backend type %v", bc.Type))
 		}
 	}
 	return bm
@@ -66,7 +70,7 @@ func (gc GlobalConfig) GetFrontends() []frontends.Frontend {
 		Maps frontends to backends in the same run
 	*/
 	var r []frontends.Frontend
-	bm := gc.getBackends()
+	bm := gc.GetBackends()
 	for n, fields := range gc.Frontends {
 		switch n {
 		case "netflow":
