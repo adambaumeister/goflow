@@ -1,24 +1,33 @@
 # **This is pre-release software. Use at your own risk!**
 # Description
-
-![Imgur](https://i.imgur.com/HdIxEOB.png)
-
+<p align="center">
+    <img src="https://i.imgur.com/HdIxEOB.png">
+</p>
 This is a very early release of Goflow, a golang-based netflow collector with a flexible backend.
-
-Right now, there are many features not implemented and only one supported frontend/backend (netflow/mysql, respectively).
 
 A list of upcoming features can be found under the issue tracker for this project.
 
+Currently supported frontend/backend combinations are 
+
+Frontend | Backend
+------ | ------ |
+Netflow | Mysql 
+Netflow | Timescaledb
+
+
 # Prereqs
 
-For this release, you need a running mysql server and the following details from it
+You need a running backend and associated connection information;
 
-- IP address or hostname
-- Database name
+- Server fqdn 
 - Username
 - Password
+- Database name
 
-A cost-effective option is Amazon RDS (https://aws.amazon.com/rds/) if you don't have spare servers to run a mysql instance on. Keep in mind that SSL for the backend is not yet implemented so uhhh did I mention this is pre-release software?
+For Mysql, you could use the free tier of Amazon RDS to get started.
+
+See the SETUP.md instructions within the backend directories in this repo for help
+specific to each backend. (i.e ./backends/timescale/SETUP.MD)
 
 # Installation
 Goflow requires two files to run;
