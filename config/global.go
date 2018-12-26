@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/adambaumeister/goflow/backends"
 	"github.com/adambaumeister/goflow/backends/mysql"
 	"github.com/adambaumeister/goflow/backends/timescale"
@@ -55,6 +56,8 @@ func (gc *GlobalConfig) GetBackends() map[string]backends.Backend {
 			b := backends.Dump{}
 			b.Configure(gc.Backends[n].Config)
 			bm[n] = &b
+		default:
+			panic(fmt.Sprintf("Error: Invalid backend type %v", bc.Type))
 		}
 	}
 	return bm
