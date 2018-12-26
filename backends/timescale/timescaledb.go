@@ -19,6 +19,8 @@ const TEST_QUERY = `SELECT MIN(last_switched) as minday, MAX(last_switched) as m
 ) AS fps
  FROM goflow_records;`
 
+const PRUNE_QUERY = "DELETE FROM goflow_records WHERE last_switched <= DATE_SUB(CURDATE(), INTERVAL %v DAY)"
+
 type Tsdb struct {
 	Dbname string
 	Dbpass string
@@ -308,6 +310,14 @@ func (b *Tsdb) Test() string {
 
 	return fmt.Sprintf("Timescale DB Status: Table size: %v Bytes, Index: %v Bytes, Flows/second: %v", table_bytes.String, index_bytes.String, fps.String)
 
+}
+
+func (b *Tsdb) Prune(interval string) {
+	db := b.connect()
+	_, err := db.Exec(fmt.Sprintf(PRUNE_QUERY, interval))
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 func (b *Tsdb) CheckSchema() {

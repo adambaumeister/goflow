@@ -14,4 +14,7 @@ frontends:
       bindport: 9999
     backend: rdssql
 
+utilities:
+  max_age: 180
+
 api: 127.0.0.1:8880

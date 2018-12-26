@@ -14,6 +14,7 @@ MySQL Backend
 */
 const USE_QUERY = "USE %v"
 const TEST_QUERY = "SELECT count(last_switched)/TIMESTAMPDIFF(SECOND, MIN(last_switched), MAX(last_switched)) AS fps, MAX(last_switched), MIN(last_switched) FROM goflow_records;"
+const PRUNE_QUERY = "DELETE FROM goflow_records WHERE last_switched <= DATE_SUB(CURDATE(), INTERVAL %v DAY)"
 
 type Mysql struct {
 	Dbname string
@@ -279,8 +280,17 @@ func (b *Mysql) Test() string {
 			panic(err.Error())
 		}
 	}
-
+	db.Close()
 	return fmt.Sprintf("MYSQL status: Flows/second: %v, Last Flow received: %v", fps.String, maxday.String)
+}
+
+func (b *Mysql) Prune(interval string) {
+	db := b.connect()
+	fmt.Printf("Pruning old data..\n")
+	_, err := db.Exec(fmt.Sprintf(PRUNE_QUERY, interval))
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 func (b *Mysql) CheckSchema() {

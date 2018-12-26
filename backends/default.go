@@ -10,4 +10,5 @@ type Backend interface {
 	Test() string
 	Configure(map[string]string)
 	Add(map[uint16]fields.Value)
+	Prune(string)
 }
