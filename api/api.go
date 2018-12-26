@@ -23,7 +23,7 @@ func Start(gc *config.GlobalConfig) {
 
 	http.HandleFunc("/", a.getHandler)
 	http.HandleFunc("/status", a.Test)
-	log.Fatal(http.ListenAndServe("127.0.0.1:8880", nil))
+	log.Fatal(http.ListenAndServe(a.config.Api, nil))
 
 }
 

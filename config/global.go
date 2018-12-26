@@ -14,6 +14,7 @@ import (
 type GlobalConfig struct {
 	Frontends map[string]FrontendConfig
 	Backends  map[string]BackendConfig
+	Api       string
 }
 
 type FrontendConfig struct {

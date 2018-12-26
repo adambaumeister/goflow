@@ -41,3 +41,14 @@ export SQL_PASSWORD=your_sql_pw_here
 
 In the future, an installation script will be packaged for most systems but for now, you will need to create your own systemd or init scripts to start it.
 
+# Monitoring and utilities
+The goflow binary doubles as a client interface, and a JSON API is started at the same time as the daemon.
+
+The API listens on localhost by default, but this can be tuned (see the configuration example).
+
+The Goflow API is not for retrieving flow data, but performing ongoing maintenence and ops on the collector itself.
+
+Goflow help displays a list of options.
+```bash
+./goflow help
+```
