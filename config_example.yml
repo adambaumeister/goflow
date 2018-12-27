@@ -34,3 +34,10 @@ frontends:
 ###
 # Specify bindaddr for API
 api: 127.0.0.1:8880
+
+###
+### Utility Config
+###
+utilities:
+  # Max_age is the length of time - in days - to store flow records for. Flows are pruned one daily based on this number.
+  max_age: 180
