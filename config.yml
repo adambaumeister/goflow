@@ -1,11 +1,11 @@
 backends:
   rdssql:
-    type: mysql
+    type: timescale
     config:
-      #SQL_SERVER: ec2-13-211-228-101.ap-southeast-2.compute.amazonaws.com
-      #SQL_USERNAME: remoteuser
-      SQL_SERVER: 52.62.226.159
-      SQL_USERNAME: testgoflow
+      SQL_SERVER: ec2-54-252-192-35.ap-southeast-2.compute.amazonaws.com
+      SQL_USERNAME: remoteuser
+      #SQL_SERVER: 52.62.226.159
+      #SQL_USERNAME: testgoflow
       SQL_DB: testgoflow
 frontends:
   netflow:
@@ -13,5 +13,8 @@ frontends:
       bindaddr: 192.168.1.164
       bindport: 9999
     backend: rdssql
+
+utilities:
+  max_age: 180
 
 api: 127.0.0.1:8880

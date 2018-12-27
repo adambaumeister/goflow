@@ -13,10 +13,17 @@ func main() {
 
 	gc := config.Read("config.yml")
 
-	fmt.Printf("Starting threads...")
+	fmt.Printf("Starting Frontends...")
 	fe := gc.GetFrontends()
 	for _, f := range fe {
 		go f.Start()
 	}
+	fmt.Printf("[ OK ]\n")
+	fmt.Printf("Starting utilities...")
+	utilities := gc.GetUtilities()
+	for _, u := range utilities {
+		go u.Run()
+	}
+	fmt.Printf("[ OK ]\n")
 	api.Start(&gc)
 }

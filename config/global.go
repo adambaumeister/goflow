@@ -6,6 +6,7 @@ import (
 	"github.com/adambaumeister/goflow/backends/mysql"
 	"github.com/adambaumeister/goflow/backends/timescale"
 	"github.com/adambaumeister/goflow/frontends"
+	"github.com/adambaumeister/goflow/utils"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
@@ -15,6 +16,7 @@ type GlobalConfig struct {
 	Frontends map[string]FrontendConfig
 	Backends  map[string]BackendConfig
 	Api       string
+	Utilities map[string]string
 }
 
 type FrontendConfig struct {
@@ -62,6 +64,21 @@ func (gc *GlobalConfig) GetBackends() map[string]backends.Backend {
 		}
 	}
 	return bm
+}
+
+func (gc *GlobalConfig) GetUtilities() map[string]utils.Utility {
+	um := make(map[string]utils.Utility)
+	for n, c := range gc.Utilities {
+		switch n {
+		case "max_age":
+			utility := utils.MaxAge{
+				MaxAgeDays: c,
+			}
+			utility.SetBackends(gc.GetBackends())
+			um[n] = &utility
+		}
+	}
+	return um
 }
 
 func (gc GlobalConfig) GetFrontends() []frontends.Frontend {

@@ -19,6 +19,8 @@ const TEST_QUERY = `SELECT MIN(last_switched) as minday, MAX(last_switched) as m
 ) AS fps
  FROM goflow_records;`
 
+const PRUNE_QUERY = "DELETE FROM goflow_records WHERE last_switched <= NOW() - INTERVAL '%v DAYS';"
+
 type Tsdb struct {
 	Dbname string
 	Dbpass string
@@ -233,9 +235,9 @@ func (b *Tsdb) Init() {
 	}
 	datetimec := s.AddIntColumn(fields.TIMESTAMP, "last_switched", "TIMESTAMPTZ", "NOT NULL")
 	datetimec.Wrap = "to_timestamp(%v)"
-	s.AddIntColumn(fields.IPV4_SRC_ADDR, "src_ip", "integer", "DEFAULT NULL")
+	s.AddBinaryColumn(fields.IPV4_SRC_ADDR, "src_ip", "inet", "DEFAULT NULL")
 	s.AddIntColumn(fields.L4_SRC_PORT, "src_port", "integer", "NOT NULL")
-	s.AddIntColumn(fields.IPV4_DST_ADDR, "dst_ip", "integer", "DEFAULT NULL")
+	s.AddBinaryColumn(fields.IPV4_DST_ADDR, "dst_ip", "inet", "DEFAULT NULL")
 	s.AddIntColumn(fields.L4_DST_PORT, "dst_port", "integer", "NOT NULL")
 	s.AddIntColumn(fields.IN_BYTES, "in_bytes", "integer", "NOT NULL")
 	s.AddIntColumn(fields.IN_PKTS, "in_pkts", "integer", "NOT NULL")
@@ -308,6 +310,15 @@ func (b *Tsdb) Test() string {
 
 	return fmt.Sprintf("Timescale DB Status: Table size: %v Bytes, Index: %v Bytes, Flows/second: %v", table_bytes.String, index_bytes.String, fps.String)
 
+}
+
+func (b *Tsdb) Prune(interval string) {
+	db := b.connect()
+	_, err := db.Exec(fmt.Sprintf(PRUNE_QUERY, interval))
+	if err != nil {
+		fmt.Printf(fmt.Sprintf(PRUNE_QUERY, interval))
+		panic(err.Error())
+	}
 }
 
 func (b *Tsdb) CheckSchema() {
