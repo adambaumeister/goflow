@@ -1,5 +1,8 @@
 language: go
 
+before_install:
+  - ./start_test_environment.sh
+
 # safelist Master branch changes only
 branches:
   only:
@@ -8,6 +11,9 @@ branches:
 after_success:
   - go build goflow.go
   - tar -czf goflow.Linux.AMD64.tar.gz goflow config_example.yml
+
+after_failure:
+  - aws ec2 stop-instances --instance-id $AWS_INSTANCE_ID
 
 deploy:
   provider: releases

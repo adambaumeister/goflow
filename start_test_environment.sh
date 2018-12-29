@@ -9,6 +9,7 @@ pip3 install awscli
 #   - AWS_ACCESS_KEY_ID         : AWS access key
 #   - AWS_SECRET_ACCESS_KEY     : AWS Secret
 #   - AWS_INSTANCE_ID           : Instance to test against
+#   - SQL_PASSWORD              : The SQL Database password for backend testing
 export AWS_DEFAULT_REGION=ap-southeast-2
 aws ec2 start-instances --instance-ids $AWS_INSTANCE_ID
 # Wait for it to start
@@ -21,3 +22,4 @@ then
     exit 1
 fi
 echo $SQL_SERVER
+cd ..

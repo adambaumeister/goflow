@@ -1,12 +1,20 @@
 package timescale
 
 import (
+	"github.com/adambaumeister/goflow/backends"
 	"os"
 	"testing"
 )
 
 const TEST_USER = "remoteuser"
 
+/*
+Test this backend using the a dummy set of data
+
+Requires a running instance and the following env variables exported:
+	- SQL_SERVER
+	- SQL_PASSWORD
+*/
 func TestBackend(t *testing.T) {
 	b := Tsdb{}
 	config := make(map[string]string)
@@ -15,9 +23,8 @@ func TestBackend(t *testing.T) {
 	config["SQL_USERNAME"] = TEST_USER
 
 	b.Configure(config)
-	db := b.connect()
-	err := db.Ping()
-	if err != nil {
-		t.Error(err.Error())
-	}
+	b.Init()
+
+	testFlow := backends.GetTestFlow()
+	b.Add(testFlow)
 }
