@@ -3,7 +3,7 @@ dist: xenial
 before_install:
   - sudo apt-get update
   - sudo apt-get install -y python3-venv
-  - ./start_test_environment.sh
+  - . ./start_test_environment.sh
 
 # safelist Master branch changes only
 branches:
@@ -15,6 +15,7 @@ after_success:
   - tar -czf goflow.Linux.AMD64.tar.gz goflow config_example.yml
 
 after_failure:
+  - cd aws-cli-tools
   - aws ec2 stop-instances --instance-id $AWS_INSTANCE_ID
 
 deploy:
