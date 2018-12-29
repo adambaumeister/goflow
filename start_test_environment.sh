@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Start the venv we will install awscli into
 # This is really just to make sure the process of building a test env works OK
+sudo apt-get install python3-venv
 python3 -m venv aws-cli-tools
 cd aws-cli-tools
 . bin/activate
