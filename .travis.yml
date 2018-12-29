@@ -1,4 +1,10 @@
 language: go
+
+# safelist Master branch changes only
+branches:
+  only:
+    - master
+
 after_success:
   - go build goflow.go
   - tar -czf goflow.Linux.AMD64.tar.gz goflow config_example.yml

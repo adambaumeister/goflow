@@ -274,7 +274,11 @@ func (b *Tsdb) Init() {
 	b.CheckSchema()
 }
 
-func (b *Tsdb) Test() string {
+/*
+Status
+Returns information about this backend
+*/
+func (b *Tsdb) Status() string {
 	db := b.connect()
 	err := db.Ping()
 	if err != nil {
@@ -309,7 +313,6 @@ func (b *Tsdb) Test() string {
 	}
 
 	return fmt.Sprintf("Timescale DB Status: Table size: %v Bytes, Index: %v Bytes, Flows/second: %v", table_bytes.String, index_bytes.String, fps.String)
-
 }
 
 func (b *Tsdb) Prune(interval string) {
