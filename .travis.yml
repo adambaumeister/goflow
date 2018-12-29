@@ -1,5 +1,5 @@
 language: go
-
+dist: xenial
 before_install:
   - ./start_test_environment.sh
 
