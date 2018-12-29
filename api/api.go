@@ -35,7 +35,7 @@ func (a *API) Test(w http.ResponseWriter, r *http.Request) {
 	var s string
 	b := a.config.GetBackends()
 	for _, be := range b {
-		s = s + be.Test() + "\n"
+		s = s + be.Status() + "\n"
 	}
 	jm := JsonMessage{
 		Msg: s,

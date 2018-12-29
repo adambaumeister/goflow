@@ -261,7 +261,11 @@ func (b *Mysql) Init() {
 	b.CheckSchema()
 }
 
-func (b *Mysql) Test() string {
+/*
+Status
+Returns information about this backend
+*/
+func (b *Mysql) Status() string {
 	db := b.connect()
 	err := db.Ping()
 	if err != nil {

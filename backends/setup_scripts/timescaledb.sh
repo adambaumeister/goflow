@@ -18,7 +18,7 @@ service postgresql restart
 pw=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-32};echo;`
 su postgres -c "psql -c \"ALTER USER postgres PASSWORD '$pw'\""
 echo "Generated postgres user pw is $pw"
-echo "host    all             remoteuser      203.206.36.44/32        md5" >> /etc/postgresql/10/main/pg_hba.conf
+echo "host    all             remoteuser      0.0.0.0/0        md5" >> /etc/postgresql/10/main/pg_hba.conf
 su postgres -c "createuser --pwprompt remoteuser"
 su postgres -c "psql -c \"CREATE DATABASE testgoflow\""
 su postgres -c "psql testgoflow -c \"CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE\""
