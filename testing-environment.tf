@@ -1,3 +1,18 @@
+/*
+testing-environment
+
+Provides an environment for testing potential goflow releases.
+
+Builds a server and vpc config but at this time does not run post-provisioning (setup_scripts).
+Requires:
+ env vars:
+  - AWS_ACCESS_KEY_ID
+  - AWS_SECRET_KEY
+
+Outputs:
+  - Public DNS endpoint
+  - Instance ID
+*/
 provider "aws" {
   region = "ap-southeast-2"
 }
@@ -103,6 +118,15 @@ resource "aws_security_group_rule" "allow_pgsql_from_any" {
   type            = "ingress"
   from_port       = 5432
   to_port         = 5432
+  protocol        = "tcp"
+  cidr_blocks     = ["0.0.0.0/0"]
+  security_group_id = "${aws_vpc.main_vpc.default_security_group_id}"
+}
+
+resource "aws_security_group_rule" "allow_mysql_from_any" {
+  type            = "ingress"
+  from_port       = 3306
+  to_port         = 3306
   protocol        = "tcp"
   cidr_blocks     = ["0.0.0.0/0"]
   security_group_id = "${aws_vpc.main_vpc.default_security_group_id}"

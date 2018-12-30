@@ -1,4 +1,4 @@
-package timescale
+package mysql
 
 import (
 	"github.com/adambaumeister/goflow/backends"
@@ -16,7 +16,7 @@ Requires a running instance and the following env variables exported:
 	- SQL_PASSWORD
 */
 func TestBackend(t *testing.T) {
-	b := Tsdb{}
+	b := Mysql{}
 	config := make(map[string]string)
 	config["SQL_DB"] = "testgoflow"
 	config["SQL_SERVER"] = os.Getenv("SQL_SERVER")

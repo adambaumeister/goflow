@@ -2,7 +2,7 @@ backends:
   rdssql:
     type: timescale
     config:
-      SQL_SERVER: ec2-54-252-192-35.ap-southeast-2.compute.amazonaws.com
+      SQL_SERVER: ec2-13-239-40-194.ap-southeast-2.compute.amazonaws.com
       SQL_USERNAME: remoteuser
       #SQL_SERVER: 52.62.226.159
       #SQL_USERNAME: testgoflow
@@ -10,7 +10,7 @@ backends:
 frontends:
   netflow:
     config:
-      bindaddr: 192.168.1.164
+      bindaddr: 192.168.1.158
       bindport: 9999
     backend: rdssql
 
