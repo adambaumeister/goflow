@@ -12,10 +12,11 @@ before_install:
   - . ./start_test_environment.sh
 
 after_success:
-  - go build goflow.go
-  - tar -czf goflow.Linux.AMD64.tar.gz goflow config_example.yml
   - cd aws-cli-tools
   - aws ec2 stop-instances --instance-id $AWS_INSTANCE_ID
+  - cd ..
+  - go build goflow.go
+  - tar -czf goflow.Linux.AMD64.tar.gz goflow config_example.yml
 
 after_failure:
   - cd aws-cli-tools
