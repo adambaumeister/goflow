@@ -38,10 +38,11 @@ The tar releases contain both these.
 
 ```bash
 # Extract and set perms
-tar -xzvf goflow.tar.gz.Linux.AMD64.gz
+tar -xzvf goflow.Linux.AMD64.tar.gz
 chmod +x goflow
+mv config_example.yml config.yml
 # Edit the config.yml file to make specific to your environment
-vi  config.yml
+vi config.yml
 # Export the required environment variables
 export SQL_PASSWORD=your_sql_pw_here
 # Run
