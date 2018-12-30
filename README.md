@@ -1,4 +1,4 @@
-# **This is pre-release software. Use at your own risk!**
+# **This is pre-release Alpha software. Use at your own risk!**
 # Description
 <p align="center">
     <img src="https://i.imgur.com/HdIxEOB.png">
