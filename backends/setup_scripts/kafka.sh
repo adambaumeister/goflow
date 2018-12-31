@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 ## Start a test Kafka instance
-## This is used for testing only.
+## This is used for testing only, this doesn't build a prod ready Kafka instance.
 ## Make sure you change the below if you're actually using this!
 SSLPW=changeme!
 
@@ -30,8 +30,8 @@ printf "!!\n";
 printf "!! For SSL Support, add the following snippet:\n\n";
 echo "listeners=PLAINTEXT://:9092, SSL://:9093
 ssl.keystore.location=/home/ubuntu/kafka_2.11-2.1.0/server.keystore.jks
-ssl.keystore.password=spaghett
-ssl.key.password=spaghett
+ssl.keystore.password=$SSLPW
+ssl.key.password=$SSLPW
 ssl.truststore.location=/home/ubuntu/kafka_2.11-2.1.0/server.truststore.jks
 ssl.truststore.password=spaghett
 "
