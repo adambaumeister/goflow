@@ -7,6 +7,15 @@ backends:
       #SQL_SERVER: 52.62.226.159
       #SQL_USERNAME: testgoflow
       SQL_DB: testgoflow
+
+  kafka:
+    type: kafka
+    config:
+      KAFKA_SERVER: ec2-13-210-246-197.ap-southeast-2.compute.amazonaws.com:9093
+      SSL: true
+      SSL_VERIFY: false
+      TOPIC: test
+
 frontends:
   netflow:
     config:
