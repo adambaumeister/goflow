@@ -1,10 +1,12 @@
 package kafka
 
 import (
+	"fmt"
 	"github.com/Shopify/sarama"
 	"log"
 	"os"
 	"os/signal"
+	"time"
 )
 
 type Kafka struct {
@@ -28,10 +30,12 @@ func (b *Kafka) Init() {
 ProducerLoop:
 	for {
 		select {
-		case producer.Input() <- &sarama.ProducerMessage{Topic: "test", Key: nil, Value: sarama.StringEncoder("testing 123")}:
+		case producer.Input() <- &sarama.ProducerMessage{Topic: "test", Key: nil, Value: sarama.StringEncoder("testing 12345")}:
 			enqueued++
+			time.Sleep(5 * time.Second)
+			break ProducerLoop
 		case err := <-producer.Errors():
-			log.Println("Failed to produce message", err)
+			panic(fmt.Sprintf("Failed to produce message: %v", err))
 			errors++
 			break ProducerLoop
 		case <-signals:
