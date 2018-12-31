@@ -4,24 +4,28 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/Shopify/sarama"
-	"log"
+	"github.com/adambaumeister/goflow/fields"
 	"os"
-	"os/signal"
 	"time"
 )
 
 type Kafka struct {
-	server  string
-	kconfig *sarama.Config
+	server   string
+	kconfig  *sarama.Config
+	testMode bool
+	tc       chan (string)
 
-	producer *sarama.AsyncProducer
+	producer sarama.AsyncProducer
 }
 
 func (b *Kafka) Configure(config map[string]string) {
 
 	cd := map[string]string{
-		"SSL":        "true",
-		"SSL_VERIFY": "false",
+		"SSL":           "true",
+		"SSL_VERIFY":    "false",
+		"TEST_MODE":     "true",
+		"SASL_USER":     "",
+		"SASL_PASSWORD": "",
 	}
 
 	for k, v := range config {
@@ -41,36 +45,52 @@ func (b *Kafka) Configure(config map[string]string) {
 	if cd["SSL"] == "true" {
 		c.Net.TLS.Enable = true
 		if cd["SSL_VERIFY"] != "true" {
-			tls_config.InsecureSkipVerify = false
+			tls_config.InsecureSkipVerify = true
 		}
 		c.Net.TLS.Config = &tls_config
 	}
+
+	if cd["SASL_USER"] != "" {
+		c.Net.SASL.Enable = true
+		c.Net.SASL.User = cd["SASL_USER"]
+		c.Net.SASL.Password = cd["SASL_PASSWORD"]
+	}
 	b.kconfig = c
+
+	if cd["TEST_MODE"] == "true" {
+		b.testMode = true
+	}
+
 }
 
 //
 func (b *Kafka) Init() {
 
-	config := sarama.NewConfig()
-	config.Net.TLS.Enable = true
-	config.Net.TLS.Config = &tls.Config{InsecureSkipVerify: true}
+	config := b.kconfig
 	config.Producer.Return.Successes = true
 	producer, err := sarama.NewAsyncProducer([]string{b.server}, config)
 	if err != nil {
 		panic(err)
 	}
 
-	// Trap SIGINT to trigger a shutdown.
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt)
-	select {
-	case producer.Input() <- &sarama.ProducerMessage{Topic: "test", Key: nil, Value: sarama.StringEncoder("Over SSL too!")}:
-		fmt.Printf("Sent")
-	case err := <-producer.Errors():
-		log.Println("Failed to produce message", err)
-		break
-	case <-signals:
-		break
+	b.producer = producer
+	mt := make(map[uint16]fields.Value)
+	b.Add(mt)
+	// This is here to prevent Main from exiting preemptively when running Go Test.
+	if b.testMode {
+		time.Sleep(2 * time.Second)
 	}
-	time.Sleep(5 * time.Second)
+}
+
+func (b *Kafka) Add(values map[uint16]fields.Value) {
+	producer := b.producer
+
+	// The idea is to try and read from producer.Errors() channel, if there's nothin' there, send the next message
+	// Because add is called constantly, this will stop whenever an error is received.
+	select {
+	case err := <-producer.Errors():
+		panic(fmt.Sprintf("Failed to produce message:: %v", err))
+	default:
+		producer.Input() <- &sarama.ProducerMessage{Topic: "test", Key: nil, Value: sarama.StringEncoder("Over SSL too!")}
+	}
 }
