@@ -13,6 +13,7 @@ Frontend | Backend
 ------ | ------ |
 Netflow | Mysql 
 Netflow | Timescaledb
+Netflow | Apache Kafka
 
 
 # Prereqs

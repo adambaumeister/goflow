@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/adambaumeister/goflow/backends"
+	"github.com/adambaumeister/goflow/backends/kafka"
 	"github.com/adambaumeister/goflow/backends/mysql"
 	"github.com/adambaumeister/goflow/backends/timescale"
 	"github.com/adambaumeister/goflow/frontends"
@@ -57,6 +58,10 @@ func (gc *GlobalConfig) GetBackends() map[string]backends.Backend {
 			bm[n] = &b
 		case "dump":
 			b := backends.Dump{}
+			b.Configure(gc.Backends[n].Config)
+			bm[n] = &b
+		case "kafka":
+			b := kafka.Kafka{}
 			b.Configure(gc.Backends[n].Config)
 			bm[n] = &b
 		default:

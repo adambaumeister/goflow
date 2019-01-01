@@ -2,6 +2,7 @@
 ### Backend configuration
 ###
 backends:
+  # Key is the identifying name
   rdssql:
     # Currently supported types:
     # - mysql
@@ -16,6 +17,18 @@ backends:
   dumper:
     type: dump
     config:
+  # Kafka example
+  kafka:
+    type: kafka
+    config:
+      # Required
+      KAFKA_SERVER: [your-server]:[listening-port]
+      KAFKA_TOPIC: [your-topic]
+      # Optional
+      SASL_USER: [SASL User]
+      SSL: true
+      SSL_VERIFY: false
+
 ###
 ### Frontend config
 ###
@@ -23,9 +36,9 @@ frontends:
   netflow:
     config:
       # Bindaddr: IP address on local system to listen for netflow
-      bindaddr: 192.168.1.164
+      bindaddr: [local address]
       # Bindport: Port to listen on
-      bindport: 9999
+      bindport: [local port]
     # Backend to store data received by this frontend
     backend: rdssql
 

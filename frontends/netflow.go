@@ -52,16 +52,17 @@ var FUNCTIONMAP = map[uint16]func([]byte) fields.Value{
 //
 // Netflow listener and main object
 type Netflow struct {
-	Templates map[uint16]netflowPacketTemplate
+	Templates map[uint32]map[uint16]netflowPacketTemplate
 	BindAddr  net.IP
 	BindPort  int
 
 	backend backends.Backend
 }
 type netflowPacket struct {
+	Source    uint32
 	Header    netflowPacketHeader
 	Length    int
-	Templates map[uint16]netflowPacketTemplate
+	Templates map[uint32]map[uint16]netflowPacketTemplate
 	Data      []netflowDataFlowset
 }
 type netflowPacketHeader struct {
@@ -144,10 +145,15 @@ func parseData(n netflowPacket, p []byte) netflowDataFlowset {
 	}
 
 	// Return no flow records if it's empty
-	if _, ok := n.Templates[nfd.FlowSetID]; !ok {
+	if _, ok := n.Templates[n.Source]; !ok {
 		return nfd
+	} else {
+		if _, ok := n.Templates[n.Source][nfd.FlowSetID]; !ok {
+			return nfd
+		}
 	}
-	t := n.Templates[nfd.FlowSetID]
+
+	t := n.Templates[n.Source][nfd.FlowSetID]
 
 	start := uint16(4)
 	// Read each Field in order from the flowset until the length is exceeded
@@ -242,7 +248,11 @@ func Route(nfp netflowPacket, p []byte, start uint16) netflowPacket {
 		// Template flowset
 		case id == uint16(0):
 			t := parseTemplate(s)
-			nfp.Templates[t.ID] = t
+			// If we've not had a template from this box yet
+			if _, ok := nfp.Templates[nfp.Source]; !ok {
+				nfp.Templates[nfp.Source] = make(map[uint16]netflowPacketTemplate)
+			}
+			nfp.Templates[nfp.Source][t.ID] = t
 			// Data flowset
 		case id > uint16(255):
 			d := parseData(nfp, s)
@@ -286,7 +296,7 @@ func (nf Netflow) Start() {
 		return
 	}
 	fmt.Printf("Listen on Addr: %v, Port: %v", nf.BindAddr, nf.BindPort)
-	nf.Templates = make(map[uint16]netflowPacketTemplate)
+	nf.Templates = make(map[uint32]map[uint16]netflowPacketTemplate)
 	// Listen to incoming flows
 	for {
 		nfpacket := netflowPacket{
@@ -299,19 +309,18 @@ func (nf Netflow) Start() {
 		packet := make([]byte, 1500)
 		// Read the max number of bytes in a datagram(1500) into a variable length slice of bytes, 'Buffer'
 		// Also set the total number of bytes read so we can check it later
-		//var addr *net.UDPAddr
-		nfpacket.Length, _, _ = conn.ReadFromUDP(packet)
-
+		var addr *net.UDPAddr
+		nfpacket.Length, addr, _ = conn.ReadFromUDP(packet)
+		nfpacket.Source = binary.BigEndian.Uint32(addr.IP)
 		p.Version = binary.BigEndian.Uint16(packet[:2])
 		p.Uptime = binary.BigEndian.Uint32(packet[4:8])
 		p.Usecs = binary.BigEndian.Uint32(packet[8:12])
 		switch p.Version {
 		case 5:
-			fmt.Printf("Wrong Netflow version, only v9 supported.")
+			fmt.Printf("Wrong Netflow version, only v9+ supported.")
 			os.Exit(1)
 		}
 		nfpacket.Header = p
-
 		nfpacket = Route(nfpacket, packet, uint16(20))
 		nf.Templates = nfpacket.Templates
 		for _, dfs := range nfpacket.Data {
