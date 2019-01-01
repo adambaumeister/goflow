@@ -307,7 +307,6 @@ func (nf Netflow) Start() {
 		// Buffer creates an array of bytes
 		// We want to read the entire datagram in as UDP is type SOCK_DGRAM and "Read" can't be called more than once
 		packet := make([]byte, 1500)
-		fmt.Printf("Got a packet")
 		// Read the max number of bytes in a datagram(1500) into a variable length slice of bytes, 'Buffer'
 		// Also set the total number of bytes read so we can check it later
 		var addr *net.UDPAddr
