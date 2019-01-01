@@ -57,6 +57,14 @@ func (j *JsonFLow) route(values map[uint16]fields.Value) {
 	}
 }
 
+func (b *Kafka) Prune(string) {
+}
+
+func (b *Kafka) Status() string {
+	b.Init()
+	return "Kafka connection looks ok.\n"
+}
+
 func (b *Kafka) Configure(config map[string]string) {
 
 	// Config required - no defaults
