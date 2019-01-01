@@ -48,6 +48,17 @@ variable "public_network_config" {
   }
 }
 
+data "aws_route53_zone" "selected" {
+  name         = "spaghettsucks.com."
+}
+
+resource "aws_route53_record" "goflow-test" {
+  name = "goflow-test.${data.aws_route53_zone.selected.name}"
+  type = "CNAME"
+  ttl = "300"
+  zone_id = "${data.aws_route53_zone.selected.zone_id}"
+  records = ["${aws_instance.goflow-test-instance.public_dns}"]
+}
 
 resource "aws_key_pair" "kp" {
   key_name = "home-key"
