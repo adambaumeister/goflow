@@ -366,7 +366,7 @@ func (b *Tsdb) CheckSchema() {
 		}
 	}
 
-	fmt.Print("Undergoing schema check. If changes are found, this may take a while...\n")
+	//fmt.Print("Undergoing schema check. If changes are found, this may take a while...\n")
 	for _, col := range b.schema.columns {
 		// Check column exists
 		if _, ok := ec[col.GetName()]; !ok {
@@ -378,7 +378,7 @@ func (b *Tsdb) CheckSchema() {
 		}
 	}
 
-	fmt.Print("Schema check done!\n")
+	//fmt.Print("Schema check done!\n")
 }
 
 func (b *Tsdb) Add(values map[uint16]fields.Value) {
