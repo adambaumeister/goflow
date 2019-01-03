@@ -6,6 +6,7 @@ import (
 	"github.com/adambaumeister/goflow/fields"
 	"math/rand"
 	"net"
+	"time"
 )
 
 //
@@ -66,10 +67,15 @@ func GetTestFlowRand(i int64) map[uint16]fields.Value {
 	dstPort := fields.GetInt(dstPortBytes)
 
 	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, rand.Uint32())
+	totalBytes := rand.Uint32()
+	totalPackets := totalBytes / 1500
+	pb := make([]byte, 4)
+	binary.BigEndian.PutUint32(b, totalBytes)
+	binary.BigEndian.PutUint32(pb, totalPackets)
+
 	protocol := fields.GetInt([]byte{6})
-	srcPkts := fields.GetInt([]byte{254, 253})
-	srcBytes := fields.GetInt([]byte{254, 253})
+	srcPkts := fields.GetInt(pb)
+	srcBytes := fields.GetInt(b)
 
 	testFlow[fields.IPV4_SRC_ADDR] = srcIP
 	testFlow[fields.IPV4_DST_ADDR] = dstIP
@@ -78,7 +84,9 @@ func GetTestFlowRand(i int64) map[uint16]fields.Value {
 	testFlow[fields.PROTOCOL] = protocol
 	testFlow[fields.IN_BYTES] = srcBytes
 	testFlow[fields.IN_PKTS] = srcPkts
-	v := fields.IntValue{Data: int(1546072176)}
+	t := time.Now()
+	//v := fields.IntValue{Data: int(1546072176)}
+	v := fields.IntValue{Data: int(t.Unix())}
 	testFlow[fields.TIMESTAMP] = v
 	return testFlow
 }

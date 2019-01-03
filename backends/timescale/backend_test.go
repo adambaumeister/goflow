@@ -33,7 +33,7 @@ func TestBackend(t *testing.T) {
 }
 
 func BenchmarkBackend(t *testing.B) {
-	fmt.Printf("Benchmarking TIMESCALE. This will generate a lot of stuff in the database!")
+	fmt.Printf("Benchmarking TIMESCALE. This will generate a lot of stuff in the database!\n")
 	b := Tsdb{}
 	config := make(map[string]string)
 	config["SQL_DB"] = "testgoflow"

@@ -19,6 +19,8 @@ const TEST_QUERY = `SELECT MIN(last_switched) as minday, MAX(last_switched) as m
 ) AS fps
  FROM goflow_records;`
 
+const ALTER_QUERY = "ALTER TABLE goflow_records ALTER COLUMN %v TYPE %v"
+
 const PRUNE_QUERY = "DELETE FROM goflow_records WHERE last_switched <= NOW() - INTERVAL '%v DAYS';"
 
 type Tsdb struct {
@@ -31,7 +33,7 @@ type Tsdb struct {
 	schema *Schema
 
 	CheckQuery    string
-	AlterQuery    string
+	AddQuery      string
 	InitQuery     string
 	AddIndexQuery string
 	InsertQuery   string
@@ -223,7 +225,7 @@ func (b *Tsdb) connect() *sql.DB {
 func (b *Tsdb) Init() {
 
 	b.CheckQuery = "select column_name, data_type, character_maximum_length from INFORMATION_SCHEMA.COLUMNS where table_name = 'goflow_records';"
-	b.AlterQuery = "ALTER TABLE goflow_records ADD COLUMN %v %v %v;"
+	b.AddQuery = "ALTER TABLE goflow_records ADD COLUMN %v %v %v;"
 	b.InitQuery = "CREATE TABLE IF NOT EXISTS goflow_records (%v);"
 	b.AddIndexQuery = "ALTER TABLE goflow_records ADD INDEX last_switched_idx (last_switched)"
 	b.InsertQuery = "INSERT INTO goflow_records (%v) VALUES (%v);"
@@ -239,8 +241,8 @@ func (b *Tsdb) Init() {
 	s.AddIntColumn(fields.L4_SRC_PORT, "src_port", "integer", "NOT NULL")
 	s.AddBinaryColumn(fields.IPV4_DST_ADDR, "dst_ip", "inet", "DEFAULT NULL")
 	s.AddIntColumn(fields.L4_DST_PORT, "dst_port", "integer", "NOT NULL")
-	s.AddIntColumn(fields.IN_BYTES, "in_bytes", "integer", "NOT NULL")
-	s.AddIntColumn(fields.IN_PKTS, "in_pkts", "integer", "NOT NULL")
+	s.AddIntColumn(fields.IN_BYTES, "in_bytes", "bigint", "NOT NULL")
+	s.AddIntColumn(fields.IN_PKTS, "in_pkts", "bigint", "NOT NULL")
 	s.AddIntColumn(fields.PROTOCOL, "protocol", "integer", "NOT NULL")
 	s.AddBinaryColumn(fields.IPV6_SRC_ADDR, "src_ipv6", "inet", "DEFAULT NULL")
 	s.AddBinaryColumn(fields.IPV6_DST_ADDR, "dst_ipv6", "inet", "DEFAULT NULL")
@@ -331,11 +333,10 @@ func (b *Tsdb) CheckSchema() {
 	var (
 		field     sql.NullString
 		FieldType sql.NullString
-		null      sql.NullString
 		maxlength sql.NullString
 	)
 	// Existing columns
-	ec := make(map[string]string)
+	ec := make(map[string]sql.NullString)
 	// Columns to delete
 	var dc []string
 	// Columns to add
@@ -351,14 +352,8 @@ func (b *Tsdb) CheckSchema() {
 		if err != nil {
 			panic(err.Error())
 		}
-		var fieldString string
-		if null.String == "YES" {
-			fieldString = fmt.Sprintf("%v %v DEFAULT NULL", field.String, FieldType.String)
-		} else {
-			fieldString = fmt.Sprintf("%v %v NOT NULL", field.String, FieldType.String)
-		}
 
-		ec[field.String] = fieldString
+		ec[field.String] = FieldType
 
 		c := b.schema.GetColumn(field.String)
 		if c == nil {
@@ -371,9 +366,18 @@ func (b *Tsdb) CheckSchema() {
 		// Check column exists
 		if _, ok := ec[col.GetName()]; !ok {
 			fmt.Printf("Adding Missing col %v to schema\n", col.GetName())
-			_, err := db.Query(fmt.Sprintf(b.AlterQuery, col.GetName(), col.GetType(), col.GetOptions()))
+			_, err := db.Query(fmt.Sprintf(b.AddQuery, col.GetName(), col.GetType(), col.GetOptions()))
 			if err != nil {
 				panic(err.Error())
+			}
+		} else if col.GetType() != ec[col.GetName()].String {
+			// This is so dumb, damn you postgres for not storing the actual column types in a describe table.
+			if col.GetName() != "last_switched" {
+				fmt.Printf("Correcting column %v: type %v to %v\n", col.GetName(), ec[col.GetName()].String, col.GetType())
+				_, err := db.Query(fmt.Sprintf(ALTER_QUERY, col.GetName(), col.GetType()))
+				if err != nil {
+					panic(err.Error())
+				}
 			}
 		}
 	}
