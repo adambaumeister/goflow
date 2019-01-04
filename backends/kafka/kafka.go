@@ -7,6 +7,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/adambaumeister/goflow/fields"
 	"os"
+	"testing"
 )
 
 type Kafka struct {
@@ -58,6 +59,9 @@ func (j *JsonFLow) route(values map[uint16]fields.Value) {
 }
 
 func (b *Kafka) Prune(string) {
+}
+
+func (b *Kafka) BenchmarkBackend(t testing.B) {
 }
 
 func (b *Kafka) Status() string {

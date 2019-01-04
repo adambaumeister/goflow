@@ -12,6 +12,8 @@ const TEST_USER = "remoteuser"
 /*
 Test this backend using the dummy set of data
 
+This is for unit testing. As such it doesn't read the config.yml file and all vars must be available here (see below).
+
 Requires a running instance and the following env variables exported:
 	- SQL_SERVER
 	- SQL_PASSWORD
