@@ -8,7 +8,7 @@ import (
 )
 
 const TEST_USER = "remoteuser"
-const BENCH_MAX = 100
+const BENCH_MAX = 1000
 
 /*
 Test this backend using the dummy set of data
