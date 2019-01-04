@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"fmt"
 	"github.com/adambaumeister/goflow/backends"
 	"os"
 	"testing"
@@ -27,4 +28,23 @@ func TestBackend(t *testing.T) {
 
 	testFlow := backends.GetTestFlow()
 	b.Add(testFlow)
+}
+
+func BenchmarkBackend(t *testing.B) {
+	fmt.Printf("Benchmarking TIMESCALE. This will generate a lot of stuff in the database!\n")
+	b := Mysql{}
+	config := make(map[string]string)
+	config["SQL_DB"] = "testgoflow"
+	config["SQL_SERVER"] = os.Getenv("SQL_SERVER")
+	config["SQL_USERNAME"] = TEST_USER
+
+	b.Configure(config)
+	b.Init()
+
+	t.ResetTimer()
+	//fmt.Printf(":::: %v  :::", t.N)
+	for i := 0; i < t.N; i++ {
+		testFlow := backends.GetTestFlowRand(int64(i))
+		b.Add(testFlow)
+	}
 }
