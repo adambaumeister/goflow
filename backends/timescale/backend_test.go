@@ -8,7 +8,6 @@ import (
 )
 
 const TEST_USER = "remoteuser"
-const BENCH_MAX = 100
 
 /*
 Test this backend using the dummy set of data
@@ -45,7 +44,7 @@ func BenchmarkBackend(t *testing.B) {
 
 	t.ResetTimer()
 	//fmt.Printf(":::: %v  :::", t.N)
-	for i := 0; i < BENCH_MAX; i++ {
+	for i := 0; i < t.N; i++ {
 		testFlow := backends.GetTestFlowRand(int64(i))
 		b.Add(testFlow)
 	}

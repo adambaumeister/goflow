@@ -63,3 +63,19 @@ Goflow help displays a list of options.
 ```bash
 ./goflow help
 ```
+
+# Performance
+Each release of Goflow is benchmarked in a test environment. 
+
+Currently the most efficient backend is **timescaledb**.
+
+The environment setup is;
+* Type: AWS T2.Micro
+* CPU: 1vCPU
+* Memory: 1GB
+* Storage: EBS SSD (Non-provisioned)
+
+
+<img src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRzmIcecD3Q-bhAaPSu46EDgxb680ejwWB06Gr9OmabVUFR-GtkVm3PCvUoI6o4Fw0YBW1KTQQjarwn/pubchart?oid=341468645&format=image">
+
+Both network latency and storage have a large impact on performance. The benchmarks above are running with Goflow on the same server as the backends.
