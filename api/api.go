@@ -39,15 +39,25 @@ func (a *API) getHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "API works!")
 }
 
+/*
+Grafana
+Add a datasource (based on config.yml config) then import the dashboards.
+*/
 func (a *API) Grafana(w http.ResponseWriter, r *http.Request) {
 	jg := JsonGrafana{}
 	body, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(body, &jg)
 	g := grafana.Grafana{}
-
-	s := fmt.Sprintf("You got this far. %v %v", jg.Server, jg.ApiKey)
 	g.Server = jg.Server
 	g.Key = jg.ApiKey
+
+	var s string
+	for name, be := range a.config.Backends {
+		if be.Type == "timescale" {
+			s = g.AddDataSource(name, be.Config)
+		}
+	}
+
 	jm := JsonMessage{
 		Msg: s,
 	}
