@@ -1,0 +1,513 @@
+{
+  "dashboard": {
+    "__inputs": [],
+    "__requires": [
+      {
+        "type": "grafana",
+        "id": "grafana",
+        "name": "Grafana",
+        "version": "5.4.2"
+      },
+      {
+        "type": "panel",
+        "id": "graph",
+        "name": "Graph",
+        "version": "5.0.0"
+      }
+    ],
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "id": null,
+    "iteration": 1546675025907,
+    "links": [],
+    "panels": [
+      {
+        "aliasColors": {},
+        "bars": true,
+        "dashLength": 10,
+        "dashes": false,
+        "fill": 1,
+        "gridPos": {
+          "h": 11,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 2,
+        "legend": {
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "show": false,
+          "total": false,
+          "values": false
+        },
+        "lines": false,
+        "linewidth": 1,
+        "links": [],
+        "nullPointMode": "null",
+        "percentage": false,
+        "pointradius": 5,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "hide": false,
+            "metricColumn": "dst_ip::varchar(32)",
+            "rawQuery": true,
+            "rawSql": "SELECT \n  max(last_switched) as time,\n  dst_ip::varchar(32) AS metric,\n  sum(in_bytes) AS in_bytes\nFROM goflow_records\nWHERE\n  $__timeFilter(last_switched)\n  AND dst_port $dst_port AND src_port $src_port AND src_ip <<= '$src_ip' AND dst_ip <<= '$dst_ip'\nGROUP BY\n  metric\nORDER BY in_bytes desc\nLIMIT $top",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "dst_port"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "goflow_records",
+            "timeColumn": "last_switched",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "TopN - By Destination Address",
+        "tooltip": {
+          "shared": true,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "series",
+          "name": null,
+          "show": true,
+          "values": [
+            "total"
+          ]
+        },
+        "yaxes": [
+          {
+            "format": "bytes",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": true,
+        "dashLength": 10,
+        "dashes": false,
+        "fill": 1,
+        "gridPos": {
+          "h": 11,
+          "w": 12,
+          "x": 0,
+          "y": 11
+        },
+        "id": 3,
+        "legend": {
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "show": false,
+          "total": false,
+          "values": false
+        },
+        "lines": false,
+        "linewidth": 1,
+        "links": [],
+        "nullPointMode": "null",
+        "percentage": false,
+        "pointradius": 5,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "hide": false,
+            "metricColumn": "dst_ip::varchar(32)",
+            "rawQuery": true,
+            "rawSql": "SELECT \n  max(last_switched) as time,\n  dst_port::varchar(32) AS metric,\n  sum(in_bytes) AS in_bytes\nFROM goflow_records\nWHERE\n  $__timeFilter(last_switched)\n  AND dst_port $dst_port AND src_port $src_port AND src_ip <<= '$src_ip' AND dst_ip <<= '$dst_ip'\nGROUP BY\n  metric\nORDER BY in_bytes desc\nLIMIT $top",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "dst_port"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "goflow_records",
+            "timeColumn": "last_switched",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "TopN - By Destination Port",
+        "tooltip": {
+          "shared": true,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "series",
+          "name": null,
+          "show": true,
+          "values": [
+            "total"
+          ]
+        },
+        "yaxes": [
+          {
+            "format": "bytes",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": true,
+        "dashLength": 10,
+        "dashes": false,
+        "fill": 1,
+        "gridPos": {
+          "h": 11,
+          "w": 12,
+          "x": 12,
+          "y": 11
+        },
+        "id": 4,
+        "legend": {
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "show": false,
+          "total": false,
+          "values": false
+        },
+        "lines": false,
+        "linewidth": 1,
+        "links": [],
+        "nullPointMode": "null",
+        "percentage": false,
+        "pointradius": 5,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "hide": false,
+            "metricColumn": "dst_ip::varchar(32)",
+            "rawQuery": true,
+            "rawSql": "SELECT \n  max(last_switched) as time,\n  src_port::varchar(32) AS metric,\n  sum(in_bytes) AS in_bytes\nFROM goflow_records\nWHERE\n  $__timeFilter(last_switched)\n  AND dst_port $dst_port AND src_port $src_port AND src_ip <<= '$src_ip' AND dst_ip <<= '$dst_ip'\nGROUP BY\n  metric\nORDER BY in_bytes desc\nLIMIT $top",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "dst_port"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "goflow_records",
+            "timeColumn": "last_switched",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "TopN - By Source Port",
+        "tooltip": {
+          "shared": true,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "series",
+          "name": null,
+          "show": true,
+          "values": [
+            "total"
+          ]
+        },
+        "yaxes": [
+          {
+            "format": "bytes",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      }
+    ],
+    "refresh": false,
+    "schemaVersion": 16,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "text": "> 0",
+            "value": "> 0"
+          },
+          "hide": 0,
+          "label": "Source Port",
+          "name": "src_port",
+          "options": [
+            {
+              "text": "> 0",
+              "value": "> 0"
+            }
+          ],
+          "query": "> 0",
+          "skipUrlSync": false,
+          "type": "textbox"
+        },
+        {
+          "current": {
+            "text": "< 1024",
+            "value": "< 1024"
+          },
+          "hide": 0,
+          "label": "Destination Port",
+          "name": "dst_port",
+          "options": [
+            {
+              "text": "<  65536",
+              "value": "<  65536"
+            }
+          ],
+          "query": "<  65536",
+          "skipUrlSync": false,
+          "type": "textbox"
+        },
+        {
+          "current": {
+            "text": "0.0.0.0/0",
+            "value": "0.0.0.0/0"
+          },
+          "hide": 0,
+          "label": "Source IP Address",
+          "name": "src_ip",
+          "options": [
+            {
+              "text": "0.0.0.0/0",
+              "value": "0.0.0.0/0"
+            }
+          ],
+          "query": "0.0.0.0/0",
+          "skipUrlSync": false,
+          "type": "textbox"
+        },
+        {
+          "current": {
+            "text": "0.0.0.0/0",
+            "value": "0.0.0.0/0"
+          },
+          "hide": 0,
+          "label": "Destination IP Address",
+          "name": "dst_ip",
+          "options": [
+            {
+              "text": "0.0.0.0/0",
+              "value": "0.0.0.0/0"
+            }
+          ],
+          "query": "0.0.0.0/0",
+          "skipUrlSync": false,
+          "type": "textbox"
+        },
+        {
+          "allValue": null,
+          "current": {
+            "tags": [],
+            "text": "15",
+            "value": "15"
+          },
+          "hide": 0,
+          "includeAll": false,
+          "label": "Top",
+          "multi": false,
+          "name": "top",
+          "options": [
+            {
+              "selected": false,
+              "text": "10",
+              "value": "10"
+            },
+            {
+              "selected": false,
+              "text": "1",
+              "value": "1"
+            },
+            {
+              "selected": false,
+              "text": "2",
+              "value": "2"
+            },
+            {
+              "selected": false,
+              "text": "5",
+              "value": "5"
+            },
+            {
+              "selected": false,
+              "text": "10",
+              "value": "10"
+            },
+            {
+              "selected": true,
+              "text": "15",
+              "value": "15"
+            }
+          ],
+          "query": "10, 1,2,5,10,15",
+          "skipUrlSync": false,
+          "type": "custom"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ]
+    },
+    "timezone": "",
+    "title": "Netflow - TopN",
+    "uid": "null",
+    "id": "null",
+    "version": 14
+  }
+}

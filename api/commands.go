@@ -1,11 +1,13 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type Commands struct {
@@ -21,7 +23,7 @@ type Path interface {
 func (c *Commands) Get() {
 	s := "Goflow command line client help\n------------------\n\n"
 	for cmd, p := range c.Paths {
-		s = s + fmt.Sprintf("%v			: %v\n", cmd, p.Help())
+		s = s + fmt.Sprintf("%v : %v\n", cmd, p.Help())
 	}
 	fmt.Printf(s)
 }
@@ -29,16 +31,77 @@ func (c *Commands) Help() string {
 	return "Display this help message."
 }
 
+func parseArgs(a []string) []string {
+	i := 2
+	var r []string
+	for _, arg := range a {
+		if i+1 > len(os.Args) {
+			fmt.Printf("Error: Missing required argument: %v\n", arg)
+			os.Exit(1)
+		}
+		r = append(r, os.Args[i])
+		i++
+	}
+	return r
+}
+
 /*
-HTTP Path do a call to the API to present their results
+Post constructs
+Grafana
 */
-type HttpPath struct {
+type GrafanaPath struct {
 	Url        string
 	Data       []byte
 	HelpString string
+	Body       []byte
+
+	Args []string
 }
 
-func (p *HttpPath) Get() {
+func ArgHelp(a []string, p []string) {
+	if a[0] == "help" {
+		fmt.Printf("Command requires: " + strings.Join(p, " - "))
+		os.Exit(0)
+	}
+}
+
+func (p *GrafanaPath) Get() {
+	jg := JsonGrafana{}
+	args := parseArgs(p.Args)
+	ArgHelp(args, p.Args)
+	jg.Server = args[0]
+	jg.ApiKey = args[1]
+	jg.Directory = args[2]
+	j, _ := json.Marshal(jg)
+	resp, err := http.Post("http://127.0.0.1:8880"+p.Url, "application/json", bytes.NewBuffer(j))
+	if err != nil {
+		panic(err)
+	}
+
+	jm := JsonMessage{}
+	body, _ := ioutil.ReadAll(resp.Body)
+	json.Unmarshal(body, &jm)
+	fmt.Printf("%v\n", jm.Msg)
+}
+func (p *GrafanaPath) Help() string {
+	return fmt.Sprintf("Configures a Grafana instance with the Goflow Dashboards.")
+}
+
+/*
+HTTP Path do a call to the API to present their results
+
+No POST data, just a generic HTTP get.
+*/
+type GenericPath struct {
+	Url        string
+	Data       []byte
+	HelpString string
+	Body       []byte
+
+	Args []string
+}
+
+func (p *GenericPath) Get() {
 	resp, err := http.Get("http://127.0.0.1:8880" + p.Url)
 	if err != nil {
 		panic(err)
@@ -49,7 +112,7 @@ func (p *HttpPath) Get() {
 	fmt.Printf("%v\n", jm.Msg)
 }
 
-func (p *HttpPath) Help() string {
+func (p *GenericPath) Help() string {
 	return p.HelpString
 }
 
@@ -57,12 +120,18 @@ func (c *Commands) Parse() {
 	c.Paths = make(map[string]Path)
 
 	// Setup the routes
-	testPath := HttpPath{
+	testPath := GenericPath{
 		Url:        "/status",
 		HelpString: "Displays the status of configured Backends",
 	}
+	grafanaPath := GrafanaPath{
+		Url:        "/grafana",
+		HelpString: "Configures a Grafana instance with Goflow compatible dashboards",
+		Args:       []string{"Grafana server", "Grafana API Key", "Dashboard Directory"},
+	}
 
 	c.Paths["status"] = &testPath
+	c.Paths["configure-grafana"] = &grafanaPath
 	c.Paths["help"] = c
 	if len(os.Args) > 1 {
 		c.Paths[os.Args[1]].Get()
