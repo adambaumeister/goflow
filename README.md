@@ -64,6 +64,33 @@ Goflow help displays a list of options.
 ./goflow help
 ```
 
+# Integrations
+## Grafana
+
+Goflow integrates natively (i.e - no plugins required) with Grafana when using the Timescale backend type.
+ 
+Grafana transforms the underlying Postgres database into a set of  pretty graphs!
+
+_Note: dummy data shown_
+
+<a href="https://imgur.com/2VTol8w"><img width="300px" src="https://i.imgur.com/2VTol8w.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/DdIhG6k"><img width="300px" src="https://i.imgur.com/DdIhG6k.png" title="source: imgur.com" /></a>
+<a href="https://imgur.com/WWpPKch"><img width="300px" src="https://i.imgur.com/WWpPKch.png" title="source: imgur.com" /></a>
+
+For convenience, Goflow provides the Dashboards (/grafana_db/*.json) and some code to setup Grafana correctly.
+
+You need:
+* A timescale backend, already configured in config.yml
+* A running grafana instance
+* <a href="http://docs.grafana.org/http_api/auth/">An API key</a> 
+
+With these requirements met, the dashboards/datasources can be setup as below.
+```bash
+# Make sure the required env-var for timescale is exported
+export SQL_PASSWORD=your-sql-password
+./goflow configure-grafana http://[ your-grafana-server ] [ your-api-key ] [ dashboard-directory ]
+```
+
 # Performance
 Each release of Goflow is benchmarked in a test environment. 
 

@@ -20,8 +20,9 @@ type JsonMessage struct {
 }
 
 type JsonGrafana struct {
-	Server string
-	ApiKey string
+	Server    string
+	ApiKey    string
+	Directory string
 }
 
 func Start(gc *config.GlobalConfig) {
@@ -57,6 +58,8 @@ func (a *API) Grafana(w http.ResponseWriter, r *http.Request) {
 			s = g.AddDataSource(name, be.Config)
 		}
 	}
+
+	s = s + g.AddDashboard(jg.Directory)
 
 	jm := JsonMessage{
 		Msg: s,

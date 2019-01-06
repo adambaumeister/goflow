@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type Commands struct {
@@ -57,11 +58,20 @@ type GrafanaPath struct {
 	Args []string
 }
 
+func ArgHelp(a []string, p []string) {
+	if a[0] == "help" {
+		fmt.Printf("Command requires: " + strings.Join(p, " - "))
+		os.Exit(0)
+	}
+}
+
 func (p *GrafanaPath) Get() {
 	jg := JsonGrafana{}
 	args := parseArgs(p.Args)
+	ArgHelp(args, p.Args)
 	jg.Server = args[0]
 	jg.ApiKey = args[1]
+	jg.Directory = args[2]
 	j, _ := json.Marshal(jg)
 	resp, err := http.Post("http://127.0.0.1:8880"+p.Url, "application/json", bytes.NewBuffer(j))
 	if err != nil {
@@ -74,7 +84,7 @@ func (p *GrafanaPath) Get() {
 	fmt.Printf("%v\n", jm.Msg)
 }
 func (p *GrafanaPath) Help() string {
-	return fmt.Sprintf("Nothing yet")
+	return fmt.Sprintf("Configures a Grafana instance with the Goflow Dashboards.")
 }
 
 /*
@@ -117,7 +127,7 @@ func (c *Commands) Parse() {
 	grafanaPath := GrafanaPath{
 		Url:        "/grafana",
 		HelpString: "Configures a Grafana instance with Goflow compatible dashboards",
-		Args:       []string{"Grafana server", "Grafana API Key"},
+		Args:       []string{"Grafana server", "Grafana API Key", "Dashboard Directory"},
 	}
 
 	c.Paths["status"] = &testPath
