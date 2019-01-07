@@ -184,6 +184,7 @@
             "id" : 6,
             "type" : "table",
             "title" : "Flow Results",
+            "datasource": "goflow",
             "scroll" : true,
             "sort" : {
                "desc" : true,
@@ -288,26 +289,5 @@
       "gnetId" : null,
       "version" : 1,
       "schemaVersion" : 16
-   },
-   "meta" : {
-      "createdBy" : "Anonymous",
-      "slug" : "netflow-flow-search",
-      "url" : "/d/JCAF6YUik/netflow-flow-search",
-      "folderUrl" : "",
-      "updatedBy" : "Anonymous",
-      "updated" : "2019-01-07T14:53:27+11:00",
-      "provisioned" : false,
-      "folderTitle" : "General",
-      "canStar" : true,
-      "isFolder" : false,
-      "created" : "2019-01-07T14:53:27+11:00",
-      "hasAcl" : false,
-      "canSave" : true,
-      "version" : 1,
-      "folderId" : 0,
-      "canAdmin" : true,
-      "expires" : "0001-01-01T00:00:00Z",
-      "canEdit" : true,
-      "type" : "db"
    }
 }

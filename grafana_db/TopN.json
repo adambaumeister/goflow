@@ -92,6 +92,7 @@
         "timeRegions": [],
         "timeShift": null,
         "title": "TopN - By Destination Address",
+        "datasource": "goflow",
         "tooltip": {
           "shared": true,
           "sort": 0,
@@ -200,6 +201,7 @@
         "timeRegions": [],
         "timeShift": null,
         "title": "TopN - By Destination Port",
+        "datasource": "goflow",
         "tooltip": {
           "shared": true,
           "sort": 0,
@@ -308,6 +310,7 @@
         "timeRegions": [],
         "timeShift": null,
         "title": "TopN - By Source Port",
+        "datasource": "goflow",
         "tooltip": {
           "shared": true,
           "sort": 0,

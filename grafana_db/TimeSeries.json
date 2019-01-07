@@ -157,6 +157,7 @@
             ],
             "lines" : true,
             "title" : "Throughput bytes",
+            "datasource": "goflow",
             "timeRegions" : [],
             "thresholds" : []
          },
@@ -219,6 +220,7 @@
             "timeRegions" : [],
             "thresholds" : [],
             "title" : "Packet rate",
+            "datasource": "goflow",
             "pointradius" : 5,
             "yaxis" : {
                "alignLevel" : null,
