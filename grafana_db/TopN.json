@@ -506,8 +506,7 @@
     },
     "timezone": "",
     "title": "Netflow - TopN",
-    "uid": "null",
-    "id": "null",
-    "version": 14
+    "uid": null,
+    "id": null
   }
 }

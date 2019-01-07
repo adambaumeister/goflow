@@ -1,292 +1,313 @@
 {
-  "dashboard": {
-    "__inputs": [],
-    "__requires": [
-      {
-        "type": "grafana",
-        "id": "grafana",
-        "name": "Grafana",
-        "version": "5.4.2"
+   "dashboard" : {
+      "editable" : true,
+      "iteration" : 1546767080840,
+      "timepicker" : {
+         "time_options" : [
+            "5m",
+            "15m",
+            "1h",
+            "6h",
+            "12h",
+            "24h",
+            "2d",
+            "7d",
+            "30d"
+         ],
+         "refresh_intervals" : [
+            "5s",
+            "10s",
+            "30s",
+            "1m",
+            "5m",
+            "15m",
+            "30m",
+            "1h",
+            "2h",
+            "1d"
+         ]
       },
-      {
-        "type": "panel",
-        "id": "table",
-        "name": "Table",
-        "version": "5.0.0"
-      }
-    ],
-    "editable": true,
-    "gnetId": null,
-    "graphTooltip": 0,
-    "id": null,
-    "iteration": 1546767080840,
-    "links": [],
-    "panels": [
-      {
-        "columns": [],
-        "fontSize": "100%",
-        "gridPos": {
-          "h": 20,
-          "w": 24,
-          "x": 0,
-          "y": 0
-        },
-        "id": 6,
-        "links": [],
-        "pageSize": null,
-        "scroll": true,
-        "showHeader": true,
-        "sort": {
-          "col": 0,
-          "desc": true
-        },
-        "styles": [
-          {
-            "alias": "time",
-            "dateFormat": "YYYY-MM-DD HH:mm:ss",
-            "link": false,
-            "pattern": "time",
-            "type": "date"
-          },
-          {
-            "alias": "",
-            "colorMode": null,
-            "colors": [
-              "rgba(245, 54, 54, 0.9)",
-              "rgba(237, 129, 40, 0.89)",
-              "rgba(50, 172, 45, 0.97)"
-            ],
-            "decimals": 2,
-            "pattern": "/.*port/",
-            "thresholds": [],
-            "type": "string",
-            "unit": "none"
-          },
-          {
-            "alias": "",
-            "colorMode": null,
-            "colors": [
-              "rgba(245, 54, 54, 0.9)",
-              "rgba(237, 129, 40, 0.89)",
-              "rgba(50, 172, 45, 0.97)"
-            ],
-            "dateFormat": "YYYY-MM-DD HH:mm:ss",
-            "decimals": 2,
-            "mappingType": 1,
-            "pattern": "in_bytes",
-            "thresholds": [],
-            "type": "number",
-            "unit": "bytes"
-          },
-          {
-            "alias": "",
-            "colorMode": null,
-            "colors": [
-              "rgba(245, 54, 54, 0.9)",
-              "rgba(237, 129, 40, 0.89)",
-              "rgba(50, 172, 45, 0.97)"
-            ],
-            "dateFormat": "YYYY-MM-DD HH:mm:ss",
-            "decimals": 2,
-            "mappingType": 1,
-            "pattern": "in_pkts",
-            "thresholds": [],
-            "type": "number",
-            "unit": "short"
-          }
-        ],
-        "targets": [
-          {
-            "format": "table",
-            "group": [],
-            "metricColumn": "none",
-            "rawQuery": true,
-            "rawSql": "SELECT \n  last_switched AS Time,\n  protocol,\n  src_port,\n  src_ip,\n  dst_port,\n  dst_ip,\n  in_bytes,\n  in_pkts\nFROM goflow_records\nWHERE\n  $__timeFilter(last_switched)\n  AND dst_port $dst_port AND src_port $src_port AND src_ip <<= '$src_ip' AND dst_ip <<= '$dst_ip'\nORDER BY last_switched desc\nLIMIT $top",
-            "refId": "A",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "timeColumn": "time",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          }
-        ],
-        "title": "Flow Results",
-        "transform": "table",
-        "type": "table"
-      }
-    ],
-    "refresh": false,
-    "schemaVersion": 16,
-    "style": "dark",
-    "tags": [],
-    "templating": {
-      "list": [
-        {
-          "current": {
-            "text": "> 0",
-            "value": "> 0"
-          },
-          "hide": 0,
-          "label": "Source Port",
-          "name": "src_port",
-          "options": [
-            {
-              "text": "> 0",
-              "value": "> 0"
-            }
-          ],
-          "query": "> 0",
-          "skipUrlSync": false,
-          "type": "textbox"
-        },
-        {
-          "current": {
-            "text": "< 1024",
-            "value": "< 1024"
-          },
-          "hide": 0,
-          "label": "Destination Port",
-          "name": "dst_port",
-          "options": [
-            {
-              "text": "<  65536",
-              "value": "<  65536"
-            }
-          ],
-          "query": "<  65536",
-          "skipUrlSync": false,
-          "type": "textbox"
-        },
-        {
-          "current": {
-            "text": "0.0.0.0/0",
-            "value": "0.0.0.0/0"
-          },
-          "hide": 0,
-          "label": "Source IP Address",
-          "name": "src_ip",
-          "options": [
-            {
-              "text": "0.0.0.0/0",
-              "value": "0.0.0.0/0"
-            }
-          ],
-          "query": "0.0.0.0/0",
-          "skipUrlSync": false,
-          "type": "textbox"
-        },
-        {
-          "current": {
-            "text": "0.0.0.0/0",
-            "value": "0.0.0.0/0"
-          },
-          "hide": 0,
-          "label": "Destination IP Address",
-          "name": "dst_ip",
-          "options": [
-            {
-              "text": "0.0.0.0/0",
-              "value": "0.0.0.0/0"
-            }
-          ],
-          "query": "0.0.0.0/0",
-          "skipUrlSync": false,
-          "type": "textbox"
-        },
-        {
-          "allValue": null,
-          "current": {
-            "text": "100",
-            "value": "100"
-          },
-          "hide": 0,
-          "includeAll": false,
-          "label": "Top",
-          "multi": false,
-          "name": "top",
-          "options": [
-            {
-              "selected": false,
-              "text": "10",
-              "value": "10"
-            },
-            {
-              "selected": false,
-              "text": "1",
-              "value": "1"
-            },
-            {
-              "selected": false,
-              "text": "2",
-              "value": "2"
-            },
-            {
-              "selected": false,
-              "text": "5",
-              "value": "5"
-            },
-            {
-              "selected": false,
-              "text": "10",
-              "value": "10"
-            },
-            {
-              "selected": true,
-              "text": "15",
-              "value": "15"
-            }
-          ],
-          "query": "10, 1,2,5,10,15",
-          "skipUrlSync": false,
-          "type": "custom"
-        }
-      ]
-    },
-    "time": {
-      "from": "now/w",
-      "to": "now/w"
-    },
-    "timepicker": {
-      "refresh_intervals": [
-        "5s",
-        "10s",
-        "30s",
-        "1m",
-        "5m",
-        "15m",
-        "30m",
-        "1h",
-        "2h",
-        "1d"
+      "tags" : [],
+      "__inputs" : [],
+      "refresh" : false,
+      "__requires" : [
+         {
+            "id" : "grafana",
+            "version" : "5.4.2",
+            "type" : "grafana",
+            "name" : "Grafana"
+         },
+         {
+            "name" : "Table",
+            "version" : "5.0.0",
+            "id" : "table",
+            "type" : "panel"
+         }
       ],
-      "time_options": [
-        "5m",
-        "15m",
-        "1h",
-        "6h",
-        "12h",
-        "24h",
-        "2d",
-        "7d",
-        "30d"
-      ]
-    },
-    "timezone": "",
-    "title": "Netflow - Flow Search",
-    "uid": null,
-    "version": 2
-  }
+      "title" : "Netflow - Flow Search",
+      "templating" : {
+         "list" : [
+            {
+               "label" : "Source Port",
+               "name" : "src_port",
+               "type" : "textbox",
+               "options" : [
+                  {
+                     "value" : "> 0",
+                     "text" : "> 0"
+                  }
+               ],
+               "hide" : 0,
+               "skipUrlSync" : false,
+               "current" : {
+                  "value" : "> 0",
+                  "text" : "> 0"
+               },
+               "query" : "> 0"
+            },
+            {
+               "current" : {
+                  "text" : "< 1024",
+                  "value" : "< 1024"
+               },
+               "query" : "<  65536",
+               "hide" : 0,
+               "skipUrlSync" : false,
+               "type" : "textbox",
+               "options" : [
+                  {
+                     "text" : "<  65536",
+                     "value" : "<  65536"
+                  }
+               ],
+               "name" : "dst_port",
+               "label" : "Destination Port"
+            },
+            {
+               "skipUrlSync" : false,
+               "hide" : 0,
+               "query" : "0.0.0.0/0",
+               "current" : {
+                  "text" : "0.0.0.0/0",
+                  "value" : "0.0.0.0/0"
+               },
+               "label" : "Source IP Address",
+               "name" : "src_ip",
+               "options" : [
+                  {
+                     "value" : "0.0.0.0/0",
+                     "text" : "0.0.0.0/0"
+                  }
+               ],
+               "type" : "textbox"
+            },
+            {
+               "hide" : 0,
+               "skipUrlSync" : false,
+               "current" : {
+                  "value" : "0.0.0.0/0",
+                  "text" : "0.0.0.0/0"
+               },
+               "query" : "0.0.0.0/0",
+               "label" : "Destination IP Address",
+               "name" : "dst_ip",
+               "type" : "textbox",
+               "options" : [
+                  {
+                     "text" : "0.0.0.0/0",
+                     "value" : "0.0.0.0/0"
+                  }
+               ]
+            },
+            {
+               "current" : {
+                  "text" : "100",
+                  "value" : "100"
+               },
+               "query" : "10, 1,2,5,10,15",
+               "multi" : false,
+               "hide" : 0,
+               "skipUrlSync" : false,
+               "type" : "custom",
+               "options" : [
+                  {
+                     "text" : "10",
+                     "selected" : false,
+                     "value" : "10"
+                  },
+                  {
+                     "text" : "1",
+                     "selected" : false,
+                     "value" : "1"
+                  },
+                  {
+                     "selected" : false,
+                     "text" : "2",
+                     "value" : "2"
+                  },
+                  {
+                     "value" : "5",
+                     "selected" : false,
+                     "text" : "5"
+                  },
+                  {
+                     "text" : "10",
+                     "selected" : false,
+                     "value" : "10"
+                  },
+                  {
+                     "value" : "15",
+                     "selected" : true,
+                     "text" : "15"
+                  }
+               ],
+               "name" : "top",
+               "includeAll" : false,
+               "allValue" : null,
+               "label" : "Top"
+            }
+         ]
+      },
+      "uid" : null,
+      "style" : "dark",
+      "id" : 1,
+      "graphTooltip" : 0,
+      "panels" : [
+         {
+            "gridPos" : {
+               "w" : 24,
+               "y" : 0,
+               "x" : 0,
+               "h" : 20
+            },
+            "pageSize" : null,
+            "id" : 6,
+            "type" : "table",
+            "title" : "Flow Results",
+            "scroll" : true,
+            "sort" : {
+               "desc" : true,
+               "col" : 0
+            },
+            "fontSize" : "100%",
+            "targets" : [
+               {
+                  "rawQuery" : true,
+                  "refId" : "A",
+                  "format" : "table",
+                  "where" : [
+                     {
+                        "name" : "$__timeFilter",
+                        "params" : [],
+                        "type" : "macro"
+                     }
+                  ],
+                  "metricColumn" : "none",
+                  "rawSql" : "SELECT \n  last_switched AS Time,\n  protocol,\n  src_port,\n  src_ip,\n  dst_port,\n  dst_ip,\n  in_bytes,\n  in_pkts\nFROM goflow_records\nWHERE\n  $__timeFilter(last_switched)\n  AND dst_port $dst_port AND src_port $src_port AND src_ip <<= '$src_ip' AND dst_ip <<= '$dst_ip'\nORDER BY last_switched desc\nLIMIT $top",
+                  "group" : [],
+                  "timeColumn" : "time",
+                  "select" : [
+                     [
+                        {
+                           "params" : [
+                              "value"
+                           ],
+                           "type" : "column"
+                        }
+                     ]
+                  ]
+               }
+            ],
+            "showHeader" : true,
+            "transform" : "table",
+            "links" : [],
+            "columns" : [],
+            "styles" : [
+               {
+                  "dateFormat" : "YYYY-MM-DD HH:mm:ss",
+                  "type" : "date",
+                  "alias" : "time",
+                  "link" : false,
+                  "pattern" : "time"
+               },
+               {
+                  "colorMode" : null,
+                  "unit" : "none",
+                  "type" : "string",
+                  "alias" : "",
+                  "pattern" : "/.*port/",
+                  "thresholds" : [],
+                  "decimals" : 2,
+                  "colors" : [
+                     "rgba(245, 54, 54, 0.9)",
+                     "rgba(237, 129, 40, 0.89)",
+                     "rgba(50, 172, 45, 0.97)"
+                  ]
+               },
+               {
+                  "pattern" : "in_bytes",
+                  "alias" : "",
+                  "decimals" : 2,
+                  "colors" : [
+                     "rgba(245, 54, 54, 0.9)",
+                     "rgba(237, 129, 40, 0.89)",
+                     "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "mappingType" : 1,
+                  "thresholds" : [],
+                  "colorMode" : null,
+                  "type" : "number",
+                  "dateFormat" : "YYYY-MM-DD HH:mm:ss",
+                  "unit" : "bytes"
+               },
+               {
+                  "colorMode" : null,
+                  "dateFormat" : "YYYY-MM-DD HH:mm:ss",
+                  "type" : "number",
+                  "unit" : "short",
+                  "pattern" : "in_pkts",
+                  "alias" : "",
+                  "mappingType" : 1,
+                  "colors" : [
+                     "rgba(245, 54, 54, 0.9)",
+                     "rgba(237, 129, 40, 0.89)",
+                     "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "decimals" : 2,
+                  "thresholds" : []
+               }
+            ]
+         }
+      ],
+      "links" : [],
+      "time" : {
+         "from" : "now/w",
+         "to" : "now/w"
+      },
+      "timezone" : "",
+      "gnetId" : null,
+      "version" : 1,
+      "schemaVersion" : 16
+   },
+   "meta" : {
+      "createdBy" : "Anonymous",
+      "slug" : "netflow-flow-search",
+      "url" : "/d/JCAF6YUik/netflow-flow-search",
+      "folderUrl" : "",
+      "updatedBy" : "Anonymous",
+      "updated" : "2019-01-07T14:53:27+11:00",
+      "provisioned" : false,
+      "folderTitle" : "General",
+      "canStar" : true,
+      "isFolder" : false,
+      "created" : "2019-01-07T14:53:27+11:00",
+      "hasAcl" : false,
+      "canSave" : true,
+      "version" : 1,
+      "folderId" : 0,
+      "canAdmin" : true,
+      "expires" : "0001-01-01T00:00:00Z",
+      "canEdit" : true,
+      "type" : "db"
+   }
 }
