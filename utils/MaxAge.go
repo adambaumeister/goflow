@@ -23,11 +23,11 @@ func (m *MaxAge) SetBackends(b map[string]backends.Backend) {
 
 func (m *MaxAge) Run() {
 	for {
+		// This is really gross, we should have some sort of internal crontab-like thing for utilities
+		time.Sleep(86400 * time.Second)
 		fmt.Printf("Pruning configured backends...\n")
 		for _, be := range m.backends {
 			be.Prune(m.MaxAgeDays)
 		}
-		// This is really gross, we should have some sort of internal crontab-like thing for utilities
-		time.Sleep(86400 * time.Second)
 	}
 }
