@@ -30,19 +30,6 @@
          ]
       },
       "tags" : [],
-      "annotations" : {
-         "list" : [
-            {
-               "enable" : true,
-               "datasource" : "-- Grafana --",
-               "iconColor" : "rgba(0, 211, 255, 1)",
-               "hide" : true,
-               "name" : "Annotations & Alerts",
-               "builtIn" : 1,
-               "type" : "dashboard"
-            }
-         ]
-      },
       "time" : {
          "from" : "now-6h",
          "to" : "now"
