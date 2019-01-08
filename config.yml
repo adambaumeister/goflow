@@ -17,7 +17,7 @@ frontends:
     config:
       bindaddr: 192.168.1.158
       bindport: 9999
-    backend: rdssql
+    backend: dumper
 
 utilities:
   max_age: 180

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/adambaumeister/goflow/api"
 	"github.com/adambaumeister/goflow/config"
+	"os"
 )
 
 func main() {
@@ -11,7 +12,13 @@ func main() {
 	c := api.Commands{}
 	c.Parse()
 
-	gc := config.Read("config.yml")
+	var gc config.GlobalConfig
+	configLoc := os.Getenv("GOFLOW_CONFIG")
+	if len(configLoc) != 0 {
+		gc = config.Read(configLoc)
+	} else {
+		gc = config.Read("config.yml")
+	}
 
 	fmt.Printf("Starting Frontends...")
 	fe := gc.GetFrontends()

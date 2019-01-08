@@ -106,3 +106,17 @@ The environment setup is;
 <img src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRzmIcecD3Q-bhAaPSu46EDgxb680ejwWB06Gr9OmabVUFR-GtkVm3PCvUoI6o4Fw0YBW1KTQQjarwn/pubchart?oid=341468645&format=image">
 
 Both network latency and storage have a large impact on performance. The benchmarks above are running with Goflow on the same server as the backends.
+
+# Environment variables
+Below are a list of all the supported environment variables and the scope in which they are relevant.
+
+Envar | Scope | Purpose
+------ | ------ | -------
+GOFLOW_CONFIG | * | Path to configuration file (config.yml)
+SQL_PASSWORD | Timescaledb, mysql | SQL password
+KAFKA_SERVER | Kafka | Kafka server 
+KAFKA_TOPIC | Kafka | Topic to publish to
+SSL | Kafka | SSL Enabled/disabled
+SSL_VERIFY | Kafka | SSL Verfification 
+SASL_USER | Kafka  | Kafka username
+SASL_PASSWORD | Kafka | Kafka password

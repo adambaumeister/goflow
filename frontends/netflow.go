@@ -52,7 +52,10 @@ var FUNCTIONMAP = map[uint16]func([]byte) fields.Value{
 //
 // Netflow listener and main object
 type Netflow struct {
-	Templates map[uint32]map[uint16]netflowPacketTemplate
+	// Hey! Have you got any of those maps left?!?!
+	// Uuuh yeah, a couple
+	// map[SOURCE IP][SOURCE ID][TEMPLATE ID]
+	Templates map[uint32]map[uint32]map[uint16]netflowPacketTemplate
 	BindAddr  net.IP
 	BindPort  int
 
@@ -62,7 +65,7 @@ type netflowPacket struct {
 	Source    uint32
 	Header    netflowPacketHeader
 	Length    int
-	Templates map[uint32]map[uint16]netflowPacketTemplate
+	Templates map[uint32]map[uint32]map[uint16]netflowPacketTemplate
 	Data      []netflowDataFlowset
 }
 type netflowPacketHeader struct {
@@ -145,15 +148,24 @@ func parseData(n netflowPacket, p []byte) netflowDataFlowset {
 	}
 
 	// Return no flow records if it's empty
+	// This needs redoing, it works but it's ugly.
+
+	// If we have no template for this source IP
 	if _, ok := n.Templates[n.Source]; !ok {
 		return nfd
 	} else {
-		if _, ok := n.Templates[n.Source][nfd.FlowSetID]; !ok {
+		// If we have no templates for this source "ID"
+		if _, ok := n.Templates[n.Source][n.Header.Id]; !ok {
 			return nfd
+		} else {
+			// Finally, if we have no template ID matching the flowset.
+			if _, ok := n.Templates[n.Source][n.Header.Id][nfd.FlowSetID]; !ok {
+				return nfd
+			}
 		}
 	}
 
-	t := n.Templates[n.Source][nfd.FlowSetID]
+	t := n.Templates[n.Source][n.Header.Id][nfd.FlowSetID]
 
 	start := uint16(4)
 	// Read each Field in order from the flowset until the length is exceeded
@@ -250,9 +262,14 @@ func Route(nfp netflowPacket, p []byte, start uint16) netflowPacket {
 			t := parseTemplate(s)
 			// If we've not had a template from this box yet
 			if _, ok := nfp.Templates[nfp.Source]; !ok {
-				nfp.Templates[nfp.Source] = make(map[uint16]netflowPacketTemplate)
+				nfp.Templates[nfp.Source] = make(map[uint32]map[uint16]netflowPacketTemplate)
 			}
-			nfp.Templates[nfp.Source][t.ID] = t
+
+			if _, ok := nfp.Templates[nfp.Source][nfp.Header.Id]; !ok {
+				nfp.Templates[nfp.Source][nfp.Header.Id] = make(map[uint16]netflowPacketTemplate)
+			}
+			nfp.Templates[nfp.Source][nfp.Header.Id][t.ID] = t
+
 			// Data flowset
 		case id > uint16(255):
 			d := parseData(nfp, s)
@@ -296,7 +313,7 @@ func (nf Netflow) Start() {
 		return
 	}
 	fmt.Printf("Listen on Addr: %v, Port: %v", nf.BindAddr, nf.BindPort)
-	nf.Templates = make(map[uint32]map[uint16]netflowPacketTemplate)
+	nf.Templates = make(map[uint32]map[uint32]map[uint16]netflowPacketTemplate)
 	// Listen to incoming flows
 	for {
 		nfpacket := netflowPacket{
@@ -315,6 +332,8 @@ func (nf Netflow) Start() {
 		p.Version = binary.BigEndian.Uint16(packet[:2])
 		p.Uptime = binary.BigEndian.Uint32(packet[4:8])
 		p.Usecs = binary.BigEndian.Uint32(packet[8:12])
+		p.Sequence = binary.BigEndian.Uint32(packet[12:16])
+		p.Id = binary.BigEndian.Uint32(packet[16:20])
 		switch p.Version {
 		case 5:
 			fmt.Printf("Wrong Netflow version, only v9+ supported.")
