@@ -1,9 +1,9 @@
-# **This is pre-release, Alpha software. Use at your own risk!**
+
 # Description
 <p align="center">
     <img src="https://i.imgur.com/HdIxEOB.png">
 </p>
-This is a very early release of Goflow, a golang-based netflow collector with a flexible backend.
+A golang-based netflow collector with a flexible backend.
 
 A list of upcoming features can be found under the issue tracker for this project.
 
@@ -92,6 +92,7 @@ export SQL_PASSWORD=your-sql-password
 ```
 
 # Performance
+## Benchmarks
 Each release of Goflow is benchmarked in a test environment. 
 
 Currently the most efficient backend is **timescaledb**.
@@ -106,6 +107,44 @@ The environment setup is;
 <img src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRzmIcecD3Q-bhAaPSu46EDgxb680ejwWB06Gr9OmabVUFR-GtkVm3PCvUoI6o4Fw0YBW1KTQQjarwn/pubchart?oid=341468645&format=image">
 
 Both network latency and storage have a large impact on performance. The benchmarks above are running with Goflow on the same server as the backends.
+
+## Notes on tuning and hardware requirements
+Netflow, unsurprisingly, generates a lot of data.
+
+It's unreasonable to try and estimate compute and storage requirements ahead of time, as this sort of thing 
+is hard to quantify, as it's entirely based on how many flows you're exporting which you probably don't already know!
+
+Instead, first decide what your goals are for the data. Specifically, decide how much data you want to _store_, 
+then what timeframe you want to be able to query _quickly_ and finally, what constitutes "_quickly_."
+
+After you have that decided, understand how increasing hardware attributes affects each decision:
+* More memory allows for more caching, which allows you to run short time range queries very efficiently. In a real environment,
+doubling the memory of a timescaledb instance reduced a SELECT query runtime by more than 10x. 
+* More cores will make complicated sorts, joins, and other SQL manipulations faster when reading from memory.
+* Faster storage improves the speed of queries that cannot be cached or are not yet cached.
+
+In practice? **You should give your SQL server access to an amount of shared memory equal to the amount of data that 
+fits in the timeframe you would like to query quickly. If it is unreasonable to fit that amount of data into memory you need to increase storage READ speeds.**
+
+Don't forget to actually tune your database after installation (we've all done it...)! Timescale offers a super good utility for doing it automatically:
+https://github.com/timescale/timescaledb-tune
+
+## Example
+
+To illustrate the above points, imagine example.corp wants to store 6 months of netflow data. They would like to query 24 hours worth as quickly as possible
+to use on their auto-refreshing wallboards in the office, which refresh once every 30 seconds.
+
+From experimentation, they run at 2k flows per second average with each flow attributed to approximately 150 bytes/flow on disk.
+
+(300B*2000)*86400 = 25GB/day
+ 
+A reccomended hardware setup would be;
+CPU: 6-8 cores
+Memory: 32GB Minimum 
+Storage: 4.5TB of disk benchmarked to at least 100MB/s read.
+
+
+
 
 # Environment variables
 Below are a list of all the supported environment variables and the scope in which they are relevant.
